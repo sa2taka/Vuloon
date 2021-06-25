@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Vuloon",
   "scripts": {
-    "lint:typecheck": "tsc",
+    "lint:typecheck": "tsc --noEmit",
     "lint:eslint": "eslint src --format 'node_modules/eslint-friendly-formatter'",
     "lint:prettier": "prettier src \"!test*\" --check",
     "fix:eslint": "yarn lint:eslint --fix",

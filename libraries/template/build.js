@@ -1,4 +1,5 @@
 const { build } = require('esbuild');
+const { dtsPlugin } = require('esbuild-plugin-d.ts');
 const glob = require('glob');
 
 const baseFolder = process.argv[2] || '.';
@@ -10,4 +11,9 @@ build({
   outbase: `${baseFolder}/src`,
   outdir: `${baseFolder}/lib`,
   platform: 'node',
+  plugins: [
+    dtsPlugin({
+      outDir: `${baseFolder}/lib`,
+    }),
+  ],
 });
