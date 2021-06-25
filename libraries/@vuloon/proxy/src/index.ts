@@ -1,8 +1,22 @@
-import { createServer, IncomingMessage, request, Server } from 'http';
+import { createServer, IncomingMessage, request, Server, ServerResponse } from 'http';
 import ProxyAgent from 'proxy-agent';
 import { parse } from './bodyParser';
 
-export interface ProxyListener {
+export type RequestData = string | Buffer | RequestStructureData;
+export interface RequestStructureData {
+  [property: string]: string | Buffer;
+}
+
+export interface RequestArgs {
+  request: IncomingMessage;
+  data: RequestData;
+}
+
+export interface RequestListener {
+  listener: (request: RequestArgs) => RequestArgs;
+}
+
+export interface ResponseListener {
   listener: (response: IncomingMessage, data: string | Buffer) => void;
 }
 
@@ -10,7 +24,8 @@ export class Proxy {
   #port: number;
   #nextProxy?: URL;
   #server!: Server;
-  #responseListeners: Record<string, ProxyListener>;
+  #requestListener: Record<string, RequestListener>;
+  #responseListeners: Record<string, ResponseListener>;
 
   /**
    * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or detault port, 5110)
@@ -19,6 +34,7 @@ export class Proxy {
    */
   constructor(port?: number, nextProxy?: string) {
     this.#responseListeners = {};
+    this.#requestListener = {};
     this.#port = port || 5110;
 
     const nextProxyUrl = nextProxy ? new URL(nextProxy) : undefined;
@@ -28,30 +44,7 @@ export class Proxy {
   }
 
   #initializeServer(): void {
-    this.#server = createServer((clientRequest, clientResponse) => {
-      if (!clientRequest.url) {
-        return;
-      }
-      const requestUrl = new URL(clientRequest.url);
-
-      const serverRequest = request({
-        host: requestUrl.hostname,
-        port: requestUrl.port,
-        method: clientRequest.method,
-        path: requestUrl.pathname,
-        headers: clientRequest.headers,
-        agent: this.#nextProxy ? new ProxyAgent(this.#nextProxy.toString()) : undefined,
-      })
-        .on('error', () => clientResponse.writeHead(502).end())
-        .on('timeout', () => clientResponse.writeHead(504).end())
-        .on('response', this.#onResponse.bind(this))
-        .on('response', (serverResponse) => {
-          clientResponse.writeHead(serverResponse.statusCode!, serverResponse.headers);
-          serverResponse.pipe(clientResponse);
-        });
-
-      clientRequest.pipe(serverRequest);
-    });
+    this.#server = createServer(this.#onRequest.bind(this));
   }
 
   /**
@@ -81,6 +74,40 @@ export class Proxy {
 
   removeResponseListener(id: string): void {
     delete this.#responseListeners[id];
+  }
+
+  #onRequest(requestData: IncomingMessage, response: ServerResponse): void {
+    let buffer: Buffer = Buffer.from([]);
+
+    requestData.on('data', (data: Uint8Array) => {
+      buffer = Buffer.concat([buffer, data]);
+    });
+
+    requestData.on('end', () => {
+      if (!requestData.url) {
+        return;
+      }
+
+      const requestUrl = new URL(requestData.url);
+
+      const serverRequest = request({
+        host: requestUrl.hostname,
+        port: requestUrl.port,
+        method: requestData.method,
+        path: requestUrl.pathname,
+        headers: requestData.headers,
+        agent: this.#nextProxy ? new ProxyAgent(this.#nextProxy.toString()) : undefined,
+      })
+        .on('error', () => response.writeHead(502).end())
+        .on('timeout', () => response.writeHead(504).end())
+        .on('response', this.#onResponse.bind(this))
+        .on('response', (serverResponse) => {
+          response.writeHead(serverResponse.statusCode!, serverResponse.headers);
+          serverResponse.pipe(response);
+        });
+
+      serverRequest.write;
+    });
   }
 
   #onResponse(response: IncomingMessage): void {

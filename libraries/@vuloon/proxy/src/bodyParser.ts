@@ -1,6 +1,7 @@
 import { IncomingHttpHeaders } from 'http';
 import { unzipSync } from 'zlib';
 import { decode } from 'iconv-lite';
+import { RequestData } from '.';
 
 /**
  * Content-Encoding is in these values.
@@ -25,6 +26,10 @@ export function parse(body: Buffer, headers: IncomingHttpHeaders): string | Buff
 
   const decodedBody = parseEncode(body, encoding);
   return parseContent(decodedBody, contentType);
+}
+
+export function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): RequestData {
+  return parse(body, headers);
 }
 
 function parseEncode(body: Buffer, encoding?: string) {
