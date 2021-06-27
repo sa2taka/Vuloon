@@ -1,4 +1,4 @@
-import { createServer, get, Server } from 'http';
+import { createServer, get, Server, request } from 'http';
 import { encode } from 'iconv-lite';
 import ProxyAgent from 'proxy-agent';
 import { Proxy } from '../src/index';
@@ -22,7 +22,7 @@ describe('Proxy', () => {
       expect(data).toBe('vuloon_test');
     });
 
-    await requestWithProxy();
+    await getWithProxy();
   });
 
   describe('charset', () => {
@@ -31,7 +31,7 @@ describe('Proxy', () => {
         expect(data).toBe('日本語テスト');
       });
 
-      await requestWithProxy('/charset/utf8');
+      await getWithProxy('/charset/utf8');
     });
 
     test('shift_jis', async () => {
@@ -39,7 +39,7 @@ describe('Proxy', () => {
         expect(data).toBe('日本語テスト');
       });
 
-      await requestWithProxy('/charset/shift_jis');
+      await getWithProxy('/charset/shift_jis');
     });
   });
 
@@ -49,7 +49,7 @@ describe('Proxy', () => {
         expect(data).toEqual(Buffer.from([1, 2, 3]));
       });
 
-      await requestWithProxy('/image/png');
+      await getWithProxy('/image/png');
     });
 
     test('audio/mp3', async () => {
@@ -57,12 +57,28 @@ describe('Proxy', () => {
         expect(data).toBe('unaccept');
       });
 
-      await requestWithProxy('/audio/mp3');
+      await getWithProxy('/audio/mp3');
+    });
+  });
+
+  describe('request', () => {
+    test('multipart/form-data', async () => {
+      proxy.addRequestListener('id', (a) => {
+        return a;
+      });
+
+      await postWithProxy(
+        '/',
+        '--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary--',
+        {
+          'Content-Type': 'multipart/form-data; boundary=boundary',
+        }
+      );
     });
   });
 });
 
-function requestWithProxy(path = '/') {
+function getWithProxy(path = '/') {
   const agent = new ProxyAgent('http://localhost:5110');
   return new Promise((resolve, reject) => {
     get(
@@ -76,6 +92,31 @@ function requestWithProxy(path = '/') {
         resolve(res);
       }
     );
+  });
+}
+
+function postWithProxy(path = '/', data = '', headers: any = {}) {
+  const agent = new ProxyAgent('http://localhost:5110');
+  return new Promise((resolve, reject) => {
+    const options = {
+      host: 'localhost',
+      port: 80,
+      path: path,
+      method: 'POST',
+      agent,
+      headers: Object.assign(
+        {
+          'Content-Type': 'text/plain',
+          'Content-Length': Buffer.byteLength(data),
+        },
+        headers
+      ),
+    };
+    const reqContext = request(options, (res) => {
+      resolve(res);
+    });
+    reqContext.write(data);
+    reqContext.end();
   });
 }
 

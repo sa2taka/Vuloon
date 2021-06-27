@@ -1,12 +1,13 @@
 import { createServer, IncomingMessage, request, Server, ServerResponse } from 'http';
 import ProxyAgent from 'proxy-agent';
-import { parse } from './bodyParser';
+import { parse, parseReuqestData } from './bodyParser';
 
-export type RequestData = string | Buffer | RequestStructureData;
-export interface RequestStructureData {
-  [property: string]: string | Buffer;
+export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | NodeJS.Dict<FormData> | any;
+export interface FormData {
+  value: string | string[] | Buffer;
+  filename?: string;
+  filenameAster?: string;
 }
-
 export interface RequestArgs {
   request: IncomingMessage;
   data: RequestData;
@@ -24,7 +25,7 @@ export class Proxy {
   #port: number;
   #nextProxy?: URL;
   #server!: Server;
-  #requestListener: Record<string, RequestListener>;
+  #requestListeners: Record<string, RequestListener>;
   #responseListeners: Record<string, ResponseListener>;
 
   /**
@@ -33,8 +34,8 @@ export class Proxy {
    * @param nextProxy next proxy url if using multiproxy
    */
   constructor(port?: number, nextProxy?: string) {
+    this.#requestListeners = {};
     this.#responseListeners = {};
-    this.#requestListener = {};
     this.#port = port || 5110;
 
     const nextProxyUrl = nextProxy ? new URL(nextProxy) : undefined;
@@ -62,7 +63,7 @@ export class Proxy {
   }
 
   /**
-   * Add listener on proxy request.
+   * Add listener on proxy response.
    * @param id listner id for remove.
    * @param listener response listener
    */
@@ -74,6 +75,21 @@ export class Proxy {
 
   removeResponseListener(id: string): void {
     delete this.#responseListeners[id];
+  }
+
+  /**
+   * Add listener on proxy request.
+   * @param id listner id for remove.
+   * @param listener response listener
+   */
+  addRequestListener(id: string, listener: (request: RequestArgs) => RequestArgs): void {
+    this.#requestListeners[id] = {
+      listener,
+    };
+  }
+
+  removeRequestListener(id: string): void {
+    delete this.#requestListeners[id];
   }
 
   #onRequest(requestData: IncomingMessage, response: ServerResponse): void {
@@ -106,7 +122,14 @@ export class Proxy {
           serverResponse.pipe(response);
         });
 
+      let parsed = parseReuqestData(buffer, requestData.headers);
+
+      Object.values(this.#requestListeners).forEach(({ listener }) => {
+        parsed = listener(parsed);
+      });
+
       serverRequest.write;
+      requestData.pipe(serverRequest);
     });
   }
 
