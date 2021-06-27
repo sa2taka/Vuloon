@@ -1,7 +1,7 @@
-import { Proxy } from '../src/index';
 import { createServer, get, Server } from 'http';
+import { encode } from 'iconv-lite';
 import ProxyAgent from 'proxy-agent';
-import { encode, decode } from 'iconv-lite';
+import { Proxy } from '../src/index';
 
 let mockServer: Server;
 let proxy: Proxy;
