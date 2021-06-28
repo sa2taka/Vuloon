@@ -84,7 +84,14 @@ function parseForFormData(body: Buffer, headers: IncomingHttpHeaders) {
   const divided = divideByBoundary(body, boundary![1]);
   const partData: FormData[] = [];
   divided.forEach((data) => {
-    partData.push(parseFormDataPart(data));
+    const parsed = parseFormDataPart(data);
+
+    const sameNameForm = partData.find((part) => part.key === parsed.key);
+    if (sameNameForm && typeof parsed.value === 'string' && !(sameNameForm.value instanceof Buffer)) {
+      sameNameForm.value = [sameNameForm.value, parsed.value].flat();
+    } else {
+      partData.push(parsed);
+    }
   });
 
   return partData;
@@ -170,16 +177,32 @@ function encodeToFormData(data: FormData[], boundary: string) {
   let retBuffer = Buffer.from('');
 
   data.forEach((form) => {
-    retBuffer = Buffer.concat([
-      retBuffer,
-      Buffer.from(`--${boundary}\r\n`),
-      Buffer.from(form.rawHeader),
-      Buffer.from('\r\n\r\n'),
-    ]);
     if (typeof form.value === 'string') {
-      retBuffer = Buffer.concat([retBuffer, Buffer.from(form.value)]);
+      retBuffer = Buffer.concat([
+        retBuffer,
+        Buffer.from(`--${boundary}\r\n`),
+        Buffer.from(form.rawHeader),
+        Buffer.from('\r\n\r\n'),
+        Buffer.from(form.value),
+      ]);
+    } else if (form.value instanceof Buffer) {
+      retBuffer = Buffer.concat([
+        retBuffer,
+        Buffer.from(`--${boundary}\r\n`),
+        Buffer.from(form.rawHeader),
+        Buffer.from('\r\n\r\n'),
+        form.value,
+      ]);
     } else {
-      retBuffer = Buffer.concat([retBuffer, form.value]);
+      form.value.forEach((v) => {
+        retBuffer = Buffer.concat([
+          retBuffer,
+          Buffer.from(`--${boundary}\r\n`),
+          Buffer.from(form.rawHeader),
+          Buffer.from('\r\n\r\n'),
+          Buffer.from(v),
+        ]);
+      });
     }
     retBuffer = Buffer.concat([retBuffer, Buffer.from('\r\n')]);
   });
