@@ -6,12 +6,12 @@ import { unzipSync } from 'zlib';
 import {
   BinaryRequestData,
   FormData,
+  FormRequestData,
   Json,
+  JsonRequetData,
   RequestData,
   StringRequestData,
   UrlEncodedRequestData,
-  FormRequestData,
-  JsonRequetData,
 } from './types';
 
 /**
@@ -169,10 +169,10 @@ function parseFormDataPart(partData: Buffer): FormData {
   };
 }
 
-function parseForJson(body: Buffer, headers: IncomingHttpHeaders) {
+function parseForJson(body: Buffer, headers: IncomingHttpHeaders): JsonRequetData | BinaryRequestData {
   const parsed = parse(body, headers);
-  if (typeof parsed === 'string') {
-    return JSON.parse(parsed);
+  if (parsed.type === 'string') {
+    return { type: 'json', value: JSON.parse(parsed.value) };
   } else {
     return parsed;
   }

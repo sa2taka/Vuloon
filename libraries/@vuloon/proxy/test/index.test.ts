@@ -73,7 +73,7 @@ describe('Proxy', () => {
 
 function getWithProxy(path = '/') {
   const agent = new ProxyAgent('http://localhost:5110');
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     get(
       {
         port: 2345,
@@ -88,9 +88,9 @@ function getWithProxy(path = '/') {
   });
 }
 
-function postWithProxy(path = '/', data = '', headers: any = {}) {
+function postWithProxy(path = '/', data = '', headers: Record<string, string> = {}) {
   const agent = new ProxyAgent('http://localhost:5110');
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const options = {
       host: 'localhost',
       port: 80,
