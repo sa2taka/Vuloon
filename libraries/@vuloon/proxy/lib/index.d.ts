@@ -10,11 +10,15 @@ export interface RequestArgs {
     request: IncomingMessage;
     data: RequestData;
 }
+export interface ResponsArgs {
+    request: IncomingMessage;
+    data: RequestData;
+}
 export interface RequestListener {
     listener: (request: RequestArgs) => RequestArgs;
 }
 export interface ResponseListener {
-    listener: (response: IncomingMessage, data: string | Buffer) => void;
+    listener: (response: ResponsArgs) => void;
 }
 export declare class Proxy {
     #private;
@@ -37,7 +41,7 @@ export declare class Proxy {
      * @param id listner id for remove.
      * @param listener response listener
      */
-    addResponseListener(id: string, listener: (response: IncomingMessage, data: string | Buffer) => void): void;
+    addResponseListener(id: string, listener: (response: ResponsArgs) => void): void;
     removeResponseListener(id: string): void;
     /**
      * Add listener on proxy request.

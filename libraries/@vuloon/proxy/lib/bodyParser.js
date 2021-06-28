@@ -30,8 +30,7 @@ var import_iconv_lite = __toModule(require("iconv-lite"));
 var import_querystring = __toModule(require("querystring"));
 var import_console = __toModule(require("console"));
 const CONTENT_TYPES = ["x-gzip", "gzip", "compress", "deflate", "identity", "br"];
-const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/];
-const UNACCEPT_CONTENT_TYPES = [/'video\/[^\s;]+/, /audio\/[^\s;]+/];
+const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
 function parse(body, headers) {
   const encoding = headers["content-encoding"];
   const contentType = headers["content-type"];
@@ -152,9 +151,6 @@ function parseContent(body, contentType) {
   }
   if (BINARY_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
     return body;
-  }
-  if (UNACCEPT_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
-    return "unaccept";
   }
   const charset = /charset=([^;\s]+)/.exec(contentType)?.[1];
   return parseToText(body, charset);

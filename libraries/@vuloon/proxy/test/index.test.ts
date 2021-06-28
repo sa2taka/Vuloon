@@ -18,7 +18,7 @@ afterAll(() => {
 
 describe('Proxy', () => {
   test('normal', async () => {
-    proxy.addResponseListener('id', (serverResponse, data) => {
+    proxy.addResponseListener('id', ({ data }) => {
       expect(data).toBe('vuloon_test');
     });
 
@@ -27,7 +27,7 @@ describe('Proxy', () => {
 
   describe('charset', () => {
     test('utf-8', async () => {
-      proxy.addResponseListener('id', (serverResponse, data) => {
+      proxy.addResponseListener('id', ({ data }) => {
         expect(data).toBe('日本語テスト');
       });
 
@@ -35,7 +35,7 @@ describe('Proxy', () => {
     });
 
     test('shift_jis', async () => {
-      proxy.addResponseListener('id', (serverResponse, data) => {
+      proxy.addResponseListener('id', ({ data }) => {
         expect(data).toBe('日本語テスト');
       });
 
@@ -45,19 +45,11 @@ describe('Proxy', () => {
 
   describe('binary', () => {
     test('image/png', async () => {
-      proxy.addResponseListener('id', (serverResponse, data) => {
+      proxy.addResponseListener('id', ({ data }) => {
         expect(data).toEqual(Buffer.from([1, 2, 3]));
       });
 
       await getWithProxy('/image/png');
-    });
-
-    test('audio/mp3', async () => {
-      proxy.addResponseListener('id', (serverResponse, data) => {
-        expect(data).toBe('unaccept');
-      });
-
-      await getWithProxy('/audio/mp3');
     });
   });
 

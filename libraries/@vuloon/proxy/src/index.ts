@@ -1,14 +1,22 @@
 import { createServer, IncomingMessage, request, Server, ServerResponse } from 'http';
 import ProxyAgent from 'proxy-agent';
-import { parse, parseReuqestData } from './bodyParser';
+import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
 
-export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | NodeJS.Dict<FormData> | any;
+export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | FormData[] | any;
 export interface FormData {
+  key: string;
   value: string | string[] | Buffer;
   filename?: string;
   filenameAster?: string;
+  rawHeader: string;
 }
+
 export interface RequestArgs {
+  request: IncomingMessage;
+  data: RequestData;
+}
+
+export interface ResponsArgs {
   request: IncomingMessage;
   data: RequestData;
 }
@@ -18,7 +26,7 @@ export interface RequestListener {
 }
 
 export interface ResponseListener {
-  listener: (response: IncomingMessage, data: string | Buffer) => void;
+  listener: (response: ResponsArgs) => void;
 }
 
 export class Proxy {
@@ -67,7 +75,7 @@ export class Proxy {
    * @param id listner id for remove.
    * @param listener response listener
    */
-  addResponseListener(id: string, listener: (response: IncomingMessage, data: string | Buffer) => void): void {
+  addResponseListener(id: string, listener: (response: ResponsArgs) => void): void {
     this.#responseListeners[id] = {
       listener,
     };
@@ -100,6 +108,7 @@ export class Proxy {
     });
 
     requestData.on('end', () => {
+      let _requestData = requestData;
       if (!requestData.url) {
         return;
       }
@@ -112,12 +121,26 @@ export class Proxy {
         return;
       }
 
+      let parsed = parseReuqestData(buffer, requestData.headers);
+
+      Object.values(this.#requestListeners).forEach(({ listener }) => {
+        const result = listener({
+          request: _requestData,
+          data: parsed,
+        });
+
+        _requestData = result.request;
+        parsed = result.data;
+      });
+
+      const data = encodeRequestData(parsed, _requestData.headers['content-type']);
+
       const serverRequest = request({
         host: requestUrl.hostname,
         port: requestUrl.port,
         method: requestData.method,
         path: requestUrl.pathname,
-        headers: requestData.headers,
+        headers: _requestData.headers,
         agent: this.#nextProxy ? new ProxyAgent(this.#nextProxy.toString()) : undefined,
       })
         .on('error', () => response.writeHead(502).end())
@@ -128,14 +151,8 @@ export class Proxy {
           serverResponse.pipe(response);
         });
 
-      let parsed = parseReuqestData(buffer, requestData.headers);
-
-      Object.values(this.#requestListeners).forEach(({ listener }) => {
-        parsed = listener(parsed);
-      });
-
-      serverRequest.write;
-      requestData.pipe(serverRequest);
+      serverRequest.write(data);
+      serverRequest.end();
     });
   }
 
@@ -150,7 +167,10 @@ export class Proxy {
     response.on('end', () => {
       const parsed = parse(buffer, header);
       Object.values(this.#responseListeners).forEach(({ listener }) => {
-        listener(response, parsed);
+        listener({
+          request: response,
+          data: parsed,
+        });
       });
     });
   }

@@ -2,7 +2,7 @@ import { IncomingHttpHeaders } from 'http';
 import { unzipSync } from 'zlib';
 import { decode } from 'iconv-lite';
 import { RequestData, FormData } from '.';
-import { parse as parseQueryString } from 'querystring';
+import { stringify as encodeToQueryString, parse as parseQueryString } from 'querystring';
 import { assert } from 'console';
 
 /**
@@ -15,12 +15,7 @@ const CONTENT_TYPES = ['x-gzip', 'gzip', 'compress', 'deflate', 'identity', 'br'
  * These content types is not parse to string but binary.
  * This is regexps.
  */
-const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/];
-
-/**
- * These content is not support.
- */
-const UNACCEPT_CONTENT_TYPES = [/'video\/[^\s;]+/, /audio\/[^\s;]+/];
+const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
 
 export function parse(body: Buffer, headers: IncomingHttpHeaders): string | Buffer {
   const encoding = headers['content-encoding'];
@@ -41,9 +36,34 @@ export function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): Re
   }
 
   if (contentType?.match(/^application\/json/)) {
-    parseForJson(body, headers);
+    return parseForJson(body, headers);
   }
   return parse(body, headers);
+}
+
+export function encodeRequestData(data: RequestData, contentType?: string): Buffer {
+  if (data instanceof Buffer) {
+    return data;
+  }
+  if (typeof data === 'string') {
+    return Buffer.from(data);
+  }
+
+  if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
+    return Buffer.from(encodeToUrlEncoded(data));
+  }
+
+  if (contentType?.match(/^multipart\/form-data/)) {
+    const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
+    assert(boundary);
+    return encodeToFormData(data, boundary![1]);
+  }
+
+  if (contentType?.match(/^application\/json/)) {
+    return Buffer.from(encodeToJson(data));
+  }
+
+  return Buffer.from('');
 }
 
 function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders) {
@@ -62,10 +82,9 @@ function parseForFormData(body: Buffer, headers: IncomingHttpHeaders) {
   assert(boundary);
 
   const divided = divideByBoundary(body, boundary![1]);
-  const partData: NodeJS.Dict<FormData> = {};
+  const partData: FormData[] = [];
   divided.forEach((data) => {
-    const [key, value] = parseFormDataPart(data);
-    partData[key] = value;
+    partData.push(parseFormDataPart(data));
   });
 
   return partData;
@@ -97,7 +116,7 @@ function divideByBoundary(body: Buffer, boundary: string) {
   return parsed;
 }
 
-function parseFormDataPart(partData: Buffer): [string, FormData] {
+function parseFormDataPart(partData: Buffer): FormData {
   const headerDivider = Buffer.from('\r\n\r\n');
   const dividedPoint = partData.indexOf(headerDivider);
   const headerBuffer = partData.slice(0, dividedPoint);
@@ -125,14 +144,13 @@ function parseFormDataPart(partData: Buffer): [string, FormData] {
 
   const value = parseContent(dataBuffer, contentType?.value);
 
-  return [
-    name[1],
-    {
-      value,
-      filename: filename ? filename[1] : undefined,
-      filenameAster: filenameAster ? filenameAster[1] : undefined,
-    },
-  ];
+  return {
+    key: name[1],
+    value,
+    filename: filename ? filename[1] : undefined,
+    filenameAster: filenameAster ? filenameAster[1] : undefined,
+    rawHeader: headerText,
+  };
 }
 
 function parseForJson(body: Buffer, headers: IncomingHttpHeaders) {
@@ -142,6 +160,20 @@ function parseForJson(body: Buffer, headers: IncomingHttpHeaders) {
   } else {
     return parsed;
   }
+}
+
+function encodeToUrlEncoded(data: NodeJS.Dict<string | string[]>) {
+  return encodeToQueryString(data);
+}
+
+function encodeToFormData(data: NodeJS.Dict<FormData>, boundary: string) {
+  const retBuffer = Buffer.from('');
+
+  return retBuffer;
+}
+
+function encodeToJson(data: any) {
+  return JSON.stringify(data);
 }
 
 function parseEncode(body: Buffer, encoding?: string) {
@@ -166,10 +198,6 @@ function parseContent(body: Buffer, contentType?: string) {
 
   if (BINARY_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
     return body;
-  }
-
-  if (UNACCEPT_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
-    return 'unaccept';
   }
 
   const charset = /charset=([^;\s]+)/.exec(contentType)?.[1];

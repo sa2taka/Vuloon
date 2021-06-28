@@ -82,6 +82,10 @@ class Proxy {
         console.error(e);
         return;
       }
+      let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
+      Object.values(this.#requestListeners).forEach(({ listener }) => {
+        parsed = listener(parsed);
+      });
       const serverRequest = (0, import_http.request)({
         host: requestUrl.hostname,
         port: requestUrl.port,
@@ -93,12 +97,6 @@ class Proxy {
         response.writeHead(serverResponse.statusCode, serverResponse.headers);
         serverResponse.pipe(response);
       });
-      let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
-      Object.values(this.#requestListeners).forEach(({ listener }) => {
-        parsed = listener(parsed);
-      });
-      serverRequest.write;
-      requestData.pipe(serverRequest);
     });
   }
   #onResponse(response) {
@@ -110,7 +108,10 @@ class Proxy {
     response.on("end", () => {
       const parsed = (0, import_bodyParser.parse)(buffer, header);
       Object.values(this.#responseListeners).forEach(({ listener }) => {
-        listener(response, parsed);
+        listener({
+          request: response,
+          data: parsed
+        });
       });
     });
   }
