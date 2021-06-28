@@ -1,9 +1,9 @@
-import { IncomingHttpHeaders } from 'http';
-import { unzipSync } from 'zlib';
-import { decode } from 'iconv-lite';
-import { RequestData, FormData } from '.';
-import { stringify as encodeToQueryString, parse as parseQueryString } from 'querystring';
 import { assert } from 'console';
+import { IncomingHttpHeaders } from 'http';
+import { decode } from 'iconv-lite';
+import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
+import { unzipSync } from 'zlib';
+import { FormData, Json, RequestData } from '.';
 
 /**
  * Content-Encoding is in these values.
@@ -50,17 +50,17 @@ export function encodeRequestData(data: RequestData, contentType?: string): Buff
   }
 
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
-    return Buffer.from(encodeToUrlEncoded(data));
+    return Buffer.from(encodeToUrlEncoded(data as NodeJS.Dict<string | string[]>));
   }
 
   if (contentType?.match(/^multipart\/form-data/)) {
     const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
     assert(boundary);
-    return encodeToFormData(data, boundary![1]);
+    return encodeToFormData(data as FormData[], boundary![1]);
   }
 
   if (contentType?.match(/^application\/json/)) {
-    return Buffer.from(encodeToJson(data));
+    return Buffer.from(encodeToJson(data as Json));
   }
 
   return Buffer.from('');
@@ -166,13 +166,28 @@ function encodeToUrlEncoded(data: NodeJS.Dict<string | string[]>) {
   return encodeToQueryString(data);
 }
 
-function encodeToFormData(data: NodeJS.Dict<FormData>, boundary: string) {
-  const retBuffer = Buffer.from('');
+function encodeToFormData(data: FormData[], boundary: string) {
+  let retBuffer = Buffer.from('');
 
+  data.forEach((form) => {
+    retBuffer = Buffer.concat([
+      retBuffer,
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from(form.rawHeader),
+      Buffer.from('\r\n\r\n'),
+    ]);
+    if (typeof form.value === 'string') {
+      retBuffer = Buffer.concat([retBuffer, Buffer.from(form.value)]);
+    } else {
+      retBuffer = Buffer.concat([retBuffer, form.value]);
+    }
+    retBuffer = Buffer.concat([retBuffer, Buffer.from('\r\n')]);
+  });
+  retBuffer = Buffer.concat([retBuffer, Buffer.from(`--${boundary}--`)]);
   return retBuffer;
 }
 
-function encodeToJson(data: any) {
+function encodeToJson(data: Json) {
   return JSON.stringify(data);
 }
 

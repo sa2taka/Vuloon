@@ -19,7 +19,7 @@ type JsonObject = {
   [key: string]: JsonPrimitive | JsonObject | JsonArray;
 };
 
-type Json = JsonPrimitive | JsonArray | JsonObject;
+export type Json = JsonArray | JsonObject;
 
 export interface RequestArgs {
   request: IncomingMessage;
