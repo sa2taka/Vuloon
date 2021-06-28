@@ -139,6 +139,7 @@ export class Proxy {
       const data = encodeRequestData(parsed, _requestData.headers['content-type']);
 
       _requestData.headers['content-length'] = data.length.toString();
+      _requestData.headers['x-vuloon-proxy'] = 'true';
 
       const serverRequest = request({
         host: requestUrl.hostname,
@@ -152,6 +153,7 @@ export class Proxy {
         .on('timeout', () => response.writeHead(504).end())
         .on('response', this.#onResponse.bind(this))
         .on('response', (serverResponse) => {
+          serverResponse.headers['x-vuloon-proxy'] = 'true';
           response.writeHead(serverResponse.statusCode!, serverResponse.headers);
           serverResponse.pipe(response);
         });

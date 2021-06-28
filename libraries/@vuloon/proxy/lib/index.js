@@ -101,6 +101,8 @@ class Proxy {
         }
       });
       const data = (0, import_bodyParser.encodeRequestData)(parsed, _requestData.headers["content-type"]);
+      _requestData.headers["content-length"] = data.length.toString();
+      _requestData.headers["x-vuloon-proxy"] = "true";
       const serverRequest = (0, import_http.request)({
         host: requestUrl.hostname,
         port: requestUrl.port,
@@ -109,6 +111,7 @@ class Proxy {
         headers: _requestData.headers,
         agent: this.#nextProxy ? new import_proxy_agent.default(this.#nextProxy.toString()) : void 0
       }).on("error", () => response.writeHead(502).end()).on("timeout", () => response.writeHead(504).end()).on("response", this.#onResponse.bind(this)).on("response", (serverResponse) => {
+        serverResponse.headers["x-vuloon-proxy"] = "true";
         response.writeHead(serverResponse.statusCode, serverResponse.headers);
         serverResponse.pipe(response);
       });

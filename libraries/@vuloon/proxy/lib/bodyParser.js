@@ -151,8 +151,8 @@ function parseFormDataPart(partData) {
 }
 function parseForJson(body, headers) {
   const parsed = parse(body, headers);
-  if (typeof parsed === "string") {
-    return JSON.parse(parsed);
+  if (parsed.type === "string") {
+    return { type: "json", value: JSON.parse(parsed.value) };
   } else {
     return parsed;
   }
@@ -189,7 +189,8 @@ function encodeToFormData(data, boundary) {
 `),
           Buffer.from(form.rawHeader),
           Buffer.from("\r\n\r\n"),
-          Buffer.from(v)
+          Buffer.from(v),
+          Buffer.from("\r\n")
         ]);
       });
     }
