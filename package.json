@@ -4,7 +4,7 @@
   "description": "Vuloon",
   "scripts": {
     "lint:typecheck": "tsc --noEmit",
-    "lint:eslint": "eslint src --format 'node_modules/eslint-friendly-formatter'",
+    "lint:eslint": "eslint src",
     "lint:prettier": "prettier src \"!test*\" --check",
     "fix:eslint": "yarn lint:eslint --fix",
     "fix:prettier": "yarn lint:prettier --write"

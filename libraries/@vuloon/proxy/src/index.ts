@@ -2,14 +2,24 @@ import { createServer, IncomingMessage, request, Server, ServerResponse } from '
 import ProxyAgent from 'proxy-agent';
 import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
 
-export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | FormData[] | any;
+export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | FormData[] | Json;
 export interface FormData {
   key: string;
-  value: string | string[] | Buffer;
+  value: string | Buffer;
   filename?: string;
   filenameAster?: string;
   rawHeader: string;
 }
+
+type JsonPrimitive = boolean | number | string | null;
+
+type JsonArray = JsonPrimitive[] | JsonObject[];
+
+type JsonObject = {
+  [key: string]: JsonPrimitive | JsonObject | JsonArray;
+};
+
+type Json = JsonPrimitive | JsonArray | JsonObject;
 
 export interface RequestArgs {
   request: IncomingMessage;
@@ -60,7 +70,11 @@ export class Proxy {
    * Start to listen.
    */
   start(): void {
-    this.#server.listen(this.#port);
+    try {
+      this.#server.listen(this.#port);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   /**
