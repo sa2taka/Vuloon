@@ -75,7 +75,13 @@ class Proxy {
       if (!requestData.url) {
         return;
       }
-      const requestUrl = new URL(requestData.url);
+      let requestUrl;
+      try {
+        requestUrl = new URL(requestData.url);
+      } catch (e) {
+        console.error(e);
+        return;
+      }
       const serverRequest = (0, import_http.request)({
         host: requestUrl.hostname,
         port: requestUrl.port,

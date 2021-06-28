@@ -104,7 +104,13 @@ export class Proxy {
         return;
       }
 
-      const requestUrl = new URL(requestData.url);
+      let requestUrl: URL;
+      try {
+        requestUrl = new URL(requestData.url);
+      } catch (e) {
+        console.error(e);
+        return;
+      }
 
       const serverRequest = request({
         host: requestUrl.hostname,
