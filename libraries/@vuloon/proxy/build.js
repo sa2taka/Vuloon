@@ -11,6 +11,7 @@ build({
   outbase: `${baseFolder}/src`,
   outdir: `${baseFolder}/lib`,
   platform: 'node',
+  format: 'cjs',
   plugins: [
     dtsPlugin({
       outDir: `${baseFolder}/lib`,

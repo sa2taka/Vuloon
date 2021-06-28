@@ -1,82 +1,115 @@
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
+var __export = (target, all) => {
+  __markAsModule(target);
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
+var __reExport = (target, module2, desc) => {
+  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
+    for (let key of __getOwnPropNames(module2))
+      if (!__hasOwnProp.call(target, key) && key !== "default")
+        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
+  }
+  return target;
 };
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __toModule = (module2) => {
+  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
 };
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _port, _nextProxy, _server, _listeners, _initializeServer, initializeServer_fn;
-import { createServer, request } from "http";
-import ProxyAgent from "proxy-agent";
-export class Proxy {
+__export(exports, {
+  Proxy: () => Proxy
+});
+var import_http = __toModule(require("http"));
+var import_proxy_agent = __toModule(require("proxy-agent"));
+var import_bodyParser = __toModule(require("./bodyParser"));
+class Proxy {
+  #port;
+  #nextProxy;
+  #server;
+  #requestListeners;
+  #responseListeners;
   constructor(port, nextProxy) {
-    __privateAdd(this, _initializeServer);
-    __privateAdd(this, _port, void 0);
-    __privateAdd(this, _nextProxy, void 0);
-    __privateAdd(this, _server, void 0);
-    __privateAdd(this, _listeners, void 0);
-    __privateSet(this, _listeners, {});
-    __privateSet(this, _port, port || 5110);
+    this.#requestListeners = {};
+    this.#responseListeners = {};
+    this.#port = port || 5110;
     const nextProxyUrl = nextProxy ? new URL(nextProxy) : void 0;
-    __privateSet(this, _nextProxy, nextProxyUrl);
-    __privateMethod(this, _initializeServer, initializeServer_fn).call(this);
+    this.#nextProxy = nextProxyUrl;
+    this.#initializeServer();
+  }
+  #initializeServer() {
+    this.#server = (0, import_http.createServer)(this.#onRequest.bind(this));
   }
   start() {
-    __privateGet(this, _server).listen(__privateGet(this, _port));
+    this.#server.listen(this.#port);
   }
   stop() {
-    __privateGet(this, _server).close();
+    this.#server.close();
   }
-  addListener(id, event, listener) {
-    __privateGet(this, _listeners)[id] = {
-      event,
+  addResponseListener(id, listener) {
+    this.#responseListeners[id] = {
       listener
     };
   }
-  removeListener(id) {
-    delete __privateGet(this, _listeners)[id];
+  removeResponseListener(id) {
+    delete this.#responseListeners[id];
+  }
+  addRequestListener(id, listener) {
+    this.#requestListeners[id] = {
+      listener
+    };
+  }
+  removeRequestListener(id) {
+    delete this.#requestListeners[id];
+  }
+  #onRequest(requestData, response) {
+    let buffer = Buffer.from([]);
+    requestData.on("data", (data) => {
+      buffer = Buffer.concat([buffer, data]);
+    });
+    requestData.on("end", () => {
+      if (!requestData.url) {
+        return;
+      }
+      const requestUrl = new URL(requestData.url);
+      const serverRequest = (0, import_http.request)({
+        host: requestUrl.hostname,
+        port: requestUrl.port,
+        method: requestData.method,
+        path: requestUrl.pathname,
+        headers: requestData.headers,
+        agent: this.#nextProxy ? new import_proxy_agent.default(this.#nextProxy.toString()) : void 0
+      }).on("error", () => response.writeHead(502).end()).on("timeout", () => response.writeHead(504).end()).on("response", this.#onResponse.bind(this)).on("response", (serverResponse) => {
+        response.writeHead(serverResponse.statusCode, serverResponse.headers);
+        serverResponse.pipe(response);
+      });
+      let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
+      Object.values(this.#requestListeners).forEach(({ listener }) => {
+        parsed = listener(parsed);
+      });
+      serverRequest.write;
+      requestData.pipe(serverRequest);
+    });
+  }
+  #onResponse(response) {
+    const header = response.headers;
+    let buffer = Buffer.from([]);
+    response.on("data", (data) => {
+      buffer = Buffer.concat([buffer, data]);
+    });
+    response.on("end", () => {
+      const parsed = (0, import_bodyParser.parse)(buffer, header);
+      Object.values(this.#responseListeners).forEach(({ listener }) => {
+        listener(response, parsed);
+      });
+    });
   }
 }
-_port = new WeakMap();
-_nextProxy = new WeakMap();
-_server = new WeakMap();
-_listeners = new WeakMap();
-_initializeServer = new WeakSet();
-initializeServer_fn = function() {
-  __privateSet(this, _server, createServer((clientRequest, clientResponse) => {
-    if (!clientRequest.url) {
-      return;
-    }
-    const requestUrl = new URL(clientRequest.url);
-    const serverRequest = request({
-      host: requestUrl.hostname,
-      port: requestUrl.port,
-      method: clientRequest.method,
-      path: requestUrl.pathname,
-      headers: clientRequest.headers,
-      agent: __privateGet(this, _nextProxy) ? new ProxyAgent(__privateGet(this, _nextProxy).toString()) : void 0
-    }).on("error", () => clientResponse.writeHead(502).end()).on("timeout", () => clientResponse.writeHead(504).end()).on("response", (serverResponse) => {
-      clientResponse.writeHead(serverResponse.statusCode, serverResponse.headers);
-      serverResponse.pipe(clientResponse);
-    });
-    for (const [, value] of Object.entries(__privateGet(this, _listeners))) {
-      serverRequest.on(value.event, value.listener);
-    }
-    clientRequest.pipe(serverRequest);
-  }));
-};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  Proxy
+});
