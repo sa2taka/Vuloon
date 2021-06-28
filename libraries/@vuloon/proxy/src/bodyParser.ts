@@ -3,7 +3,7 @@ import { IncomingHttpHeaders } from 'http';
 import { decode } from 'iconv-lite';
 import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
 import { unzipSync } from 'zlib';
-import { FormData, Json, RequestData } from '.';
+import { FormData, Json, RequestData } from './types';
 
 /**
  * Content-Encoding is in these values.

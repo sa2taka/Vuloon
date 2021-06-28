@@ -1,25 +1,7 @@
 import { createServer, IncomingMessage, request, Server, ServerResponse } from 'http';
 import ProxyAgent from 'proxy-agent';
 import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
-
-export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | FormData[] | Json;
-export interface FormData {
-  key: string;
-  value: string | Buffer | string[];
-  filename?: string;
-  filenameAster?: string;
-  rawHeader: string;
-}
-
-type JsonPrimitive = boolean | number | string | null;
-
-type JsonArray = JsonPrimitive[] | JsonObject[];
-
-type JsonObject = {
-  [key: string]: JsonPrimitive | JsonObject | JsonArray;
-};
-
-export type Json = JsonArray | JsonObject;
+import { RequestData } from './types';
 
 export interface RequestArgs {
   request: IncomingMessage;
