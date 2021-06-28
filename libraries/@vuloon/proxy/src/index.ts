@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, request, Server, ServerResponse } from 'http';
 import ProxyAgent from 'proxy-agent';
 import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
+import { textifyRequest, textifyResponse } from './textify';
 import { RequestData } from './types';
 
 export interface RequestArgs {
@@ -14,11 +15,11 @@ export interface ResponsArgs {
 }
 
 export interface RequestListener {
-  listener: (request: RequestArgs) => RequestArgs;
+  listener: (request: RequestArgs, rawHttp: string) => RequestArgs | void;
 }
 
 export interface ResponseListener {
-  listener: (response: ResponsArgs) => void;
+  listener: (response: ResponsArgs, rawHttp: string) => void;
 }
 
 export class Proxy {
@@ -71,7 +72,7 @@ export class Proxy {
    * @param id listner id for remove.
    * @param listener response listener
    */
-  addResponseListener(id: string, listener: (response: ResponsArgs) => void): void {
+  addResponseListener(id: string, listener: ResponseListener['listener']): void {
     this.#responseListeners[id] = {
       listener,
     };
@@ -86,7 +87,7 @@ export class Proxy {
    * @param id listner id for remove.
    * @param listener response listener
    */
-  addRequestListener(id: string, listener: (request: RequestArgs) => RequestArgs): void {
+  addRequestListener(id: string, listener: RequestListener['listener']): void {
     this.#requestListeners[id] = {
       listener,
     };
@@ -120,13 +121,19 @@ export class Proxy {
       let parsed = parseReuqestData(buffer, requestData.headers);
 
       Object.values(this.#requestListeners).forEach(({ listener }) => {
-        const result = listener({
-          request: _requestData,
-          data: parsed,
-        });
+        const httpText = textifyRequest(_requestData, parsed);
+        const result = listener(
+          {
+            request: _requestData,
+            data: parsed,
+          },
+          httpText
+        );
 
-        _requestData = result.request;
-        parsed = result.data;
+        if (result) {
+          _requestData = result.request;
+          parsed = result.data;
+        }
       });
 
       const data = encodeRequestData(parsed, _requestData.headers['content-type']);
@@ -162,11 +169,15 @@ export class Proxy {
 
     response.on('end', () => {
       const parsed = parse(buffer, header);
+      const httpText = textifyResponse(response, parsed);
       Object.values(this.#responseListeners).forEach(({ listener }) => {
-        listener({
-          request: response,
-          data: parsed,
-        });
+        listener(
+          {
+            request: response,
+            data: parsed,
+          },
+          httpText
+        );
       });
     });
   }

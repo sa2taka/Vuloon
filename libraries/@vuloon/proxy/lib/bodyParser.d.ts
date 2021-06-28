@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { IncomingHttpHeaders } from 'http';
-import { RequestData } from '.';
-export declare function parse(body: Buffer, headers: IncomingHttpHeaders): string | Buffer;
+import { BinaryRequestData, RequestData, StringRequestData } from './types';
+export declare function parse(body: Buffer, headers: IncomingHttpHeaders): StringRequestData | BinaryRequestData;
 export declare function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): RequestData;
+export declare function encodeRequestData(data: RequestData, contentType?: string): Buffer;

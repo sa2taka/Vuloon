@@ -1,11 +1,6 @@
 /// <reference types="node" />
 import { IncomingMessage } from 'http';
-export declare type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | NodeJS.Dict<FormData> | any;
-export interface FormData {
-    value: string | string[] | Buffer;
-    filename?: string;
-    filenameAster?: string;
-}
+import { RequestData } from './types';
 export interface RequestArgs {
     request: IncomingMessage;
     data: RequestData;
@@ -15,10 +10,10 @@ export interface ResponsArgs {
     data: RequestData;
 }
 export interface RequestListener {
-    listener: (request: RequestArgs) => RequestArgs;
+    listener: (request: RequestArgs, rawHttp: string) => RequestArgs | void;
 }
 export interface ResponseListener {
-    listener: (response: ResponsArgs) => void;
+    listener: (response: ResponsArgs, rawHttp: string) => void;
 }
 export declare class Proxy {
     #private;
@@ -41,13 +36,13 @@ export declare class Proxy {
      * @param id listner id for remove.
      * @param listener response listener
      */
-    addResponseListener(id: string, listener: (response: ResponsArgs) => void): void;
+    addResponseListener(id: string, listener: ResponseListener['listener']): void;
     removeResponseListener(id: string): void;
     /**
      * Add listener on proxy request.
      * @param id listner id for remove.
      * @param listener response listener
      */
-    addRequestListener(id: string, listener: (request: RequestArgs) => RequestArgs): void;
+    addRequestListener(id: string, listener: RequestListener['listener']): void;
     removeRequestListener(id: string): void;
 }

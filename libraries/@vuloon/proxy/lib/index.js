@@ -27,6 +27,7 @@ __export(exports, {
 var import_http = __toModule(require("http"));
 var import_proxy_agent = __toModule(require("proxy-agent"));
 var import_bodyParser = __toModule(require("./bodyParser"));
+var import_textify = __toModule(require("./textify"));
 class Proxy {
   #port;
   #nextProxy;
@@ -45,7 +46,11 @@ class Proxy {
     this.#server = (0, import_http.createServer)(this.#onRequest.bind(this));
   }
   start() {
-    this.#server.listen(this.#port);
+    try {
+      this.#server.listen(this.#port);
+    } catch (e) {
+      console.error(e);
+    }
   }
   stop() {
     this.#server.close();
@@ -72,6 +77,7 @@ class Proxy {
       buffer = Buffer.concat([buffer, data]);
     });
     requestData.on("end", () => {
+      let _requestData = requestData;
       if (!requestData.url) {
         return;
       }
@@ -84,19 +90,30 @@ class Proxy {
       }
       let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
       Object.values(this.#requestListeners).forEach(({ listener }) => {
-        parsed = listener(parsed);
+        const httpText = (0, import_textify.textifyRequest)(_requestData, parsed);
+        const result = listener({
+          request: _requestData,
+          data: parsed
+        }, httpText);
+        if (result) {
+          _requestData = result.request;
+          parsed = result.data;
+        }
       });
+      const data = (0, import_bodyParser.encodeRequestData)(parsed, _requestData.headers["content-type"]);
       const serverRequest = (0, import_http.request)({
         host: requestUrl.hostname,
         port: requestUrl.port,
         method: requestData.method,
         path: requestUrl.pathname,
-        headers: requestData.headers,
+        headers: _requestData.headers,
         agent: this.#nextProxy ? new import_proxy_agent.default(this.#nextProxy.toString()) : void 0
       }).on("error", () => response.writeHead(502).end()).on("timeout", () => response.writeHead(504).end()).on("response", this.#onResponse.bind(this)).on("response", (serverResponse) => {
         response.writeHead(serverResponse.statusCode, serverResponse.headers);
         serverResponse.pipe(response);
       });
+      serverRequest.write(data);
+      serverRequest.end();
     });
   }
   #onResponse(response) {
@@ -107,11 +124,12 @@ class Proxy {
     });
     response.on("end", () => {
       const parsed = (0, import_bodyParser.parse)(buffer, header);
+      const httpText = (0, import_textify.textifyResponse)(response, parsed);
       Object.values(this.#responseListeners).forEach(({ listener }) => {
         listener({
           request: response,
           data: parsed
-        });
+        }, httpText);
       });
     });
   }

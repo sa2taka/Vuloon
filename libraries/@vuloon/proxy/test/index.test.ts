@@ -55,7 +55,8 @@ describe('Proxy', () => {
 
   describe('request', () => {
     test('multipart/form-data', async () => {
-      proxy.addRequestListener('id', (a) => {
+      proxy.addRequestListener('id', (a, rawHttp) => {
+        console.log(rawHttp);
         return a;
       });
 
@@ -118,27 +119,39 @@ function createMock() {
       return;
     }
 
-    switch (clientRequest.url) {
-      case '/image/png':
-        clientResponse.writeHead(200, { 'Content-Type': 'image/png' });
-        clientResponse.write(Buffer.from([1, 2, 3]));
-        break;
-      case '/audio/mp3':
-        clientResponse.writeHead(200, { 'Content-Type': 'audio/mp3' });
-        clientResponse.write(Buffer.from([12, 23, 34]));
-        break;
-      case '/charset/utf8':
-        clientResponse.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-        clientResponse.write('日本語テスト');
-        break;
-      case '/charset/shift_jis':
-        clientResponse.writeHead(200, { 'Content-Type': 'text/plain; charset=shift_jis' });
-        clientResponse.write(encode('日本語テスト', 'shift_jis'));
-        break;
-      default:
-        clientResponse.writeHead(200, { 'Content-Type': 'text/plain' });
-        clientResponse.write('vuloon_test');
-    }
-    clientResponse.end();
+    let buffer = Buffer.from('');
+
+    clientRequest.on('data', (data) => {
+      buffer = Buffer.concat([buffer, data]);
+    });
+
+    clientRequest.on('end', () => {
+      switch (clientRequest.url) {
+        case '/image/png':
+          clientResponse.writeHead(200, { 'Content-Type': 'image/png' });
+          clientResponse.write(Buffer.from([1, 2, 3]));
+          break;
+        case '/audio/mp3':
+          clientResponse.writeHead(200, { 'Content-Type': 'audio/mp3' });
+          clientResponse.write(Buffer.from([12, 23, 34]));
+          break;
+        case '/charset/utf8':
+          clientResponse.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+          clientResponse.write('日本語テスト');
+          break;
+        case '/charset/shift_jis':
+          clientResponse.writeHead(200, { 'Content-Type': 'text/plain; charset=shift_jis' });
+          clientResponse.write(encode('日本語テスト', 'shift_jis'));
+          break;
+        case '/direct/header':
+        case '/direct/body':
+          clientResponse.write(buffer);
+          break;
+        default:
+          clientResponse.writeHead(200, { 'Content-Type': 'text/plain' });
+          clientResponse.write('vuloon_test');
+      }
+      clientResponse.end();
+    });
   });
 }

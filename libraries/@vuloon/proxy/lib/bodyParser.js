@@ -22,13 +22,14 @@ var __toModule = (module2) => {
   return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
 };
 __export(exports, {
+  encodeRequestData: () => encodeRequestData,
   parse: () => parse,
   parseReuqestData: () => parseReuqestData
 });
-var import_zlib = __toModule(require("zlib"));
+var import_console = __toModule(require("console"));
 var import_iconv_lite = __toModule(require("iconv-lite"));
 var import_querystring = __toModule(require("querystring"));
-var import_console = __toModule(require("console"));
+var import_zlib = __toModule(require("zlib"));
 const CONTENT_TYPES = ["x-gzip", "gzip", "compress", "deflate", "identity", "br"];
 const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
 function parse(body, headers) {
@@ -46,14 +47,34 @@ function parseReuqestData(body, headers) {
     return parseForFormData(body, headers);
   }
   if (contentType?.match(/^application\/json/)) {
-    parseForJson(body, headers);
+    return parseForJson(body, headers);
   }
   return parse(body, headers);
 }
+function encodeRequestData(data, contentType) {
+  if (data.type === "binary") {
+    return data.value;
+  }
+  if (data.type === "string") {
+    return Buffer.from(data.value);
+  }
+  if (data.type === "urlencoded") {
+    return Buffer.from(encodeToUrlEncoded(data.value));
+  }
+  if (data.type === "formdata") {
+    const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
+    (0, import_console.assert)(boundary);
+    return encodeToFormData(data.value, boundary[1]);
+  }
+  if (data.type === "json") {
+    return Buffer.from(encodeToJson(data.value));
+  }
+  return Buffer.from("");
+}
 function parseForUrlEncoded(body, headers) {
   const parsed = parse(body, headers);
-  if (typeof parsed === "string") {
-    return (0, import_querystring.parse)(parsed);
+  if (parsed.type === "string") {
+    return { type: "urlencoded", value: (0, import_querystring.parse)(parsed.value) };
   } else {
     return parsed;
   }
@@ -64,12 +85,17 @@ function parseForFormData(body, headers) {
   const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
   (0, import_console.assert)(boundary);
   const divided = divideByBoundary(body, boundary[1]);
-  const partData = {};
+  const partData = [];
   divided.forEach((data) => {
-    const [key, value] = parseFormDataPart(data);
-    partData[key] = value;
+    const parsed = parseFormDataPart(data);
+    const sameNameForm = partData.find((part) => part.key === parsed.key);
+    if (sameNameForm && typeof parsed.value === "string" && !(sameNameForm.value instanceof Buffer)) {
+      sameNameForm.value = [sameNameForm.value, parsed.value].flat();
+    } else {
+      partData.push(parsed);
+    }
   });
-  return partData;
+  return { type: "formdata", value: partData };
 }
 function divideByBoundary(body, boundary) {
   const startRawBoundary = Buffer.from("--" + boundary + "\r\n");
@@ -114,15 +140,14 @@ function parseFormDataPart(partData) {
   const filename = contentDisposition["value"].match(/filename\s*=\s*"([^"]+)"/);
   const filenameAster = contentDisposition["value"].match(/filename\*\s*=\s*"([^"]+)"/);
   const contentType = headers.find((h) => h["header"].toLowerCase() === "content-type");
-  const value = parseContent(dataBuffer, contentType?.value);
-  return [
-    name[1],
-    {
-      value,
-      filename: filename ? filename[1] : void 0,
-      filenameAster: filenameAster ? filenameAster[1] : void 0
-    }
-  ];
+  const { value } = parseContent(dataBuffer, contentType?.value);
+  return {
+    key: name[1],
+    value,
+    filename: filename ? filename[1] : void 0,
+    filenameAster: filenameAster ? filenameAster[1] : void 0,
+    rawHeader: headerText
+  };
 }
 function parseForJson(body, headers) {
   const parsed = parse(body, headers);
@@ -131,6 +156,50 @@ function parseForJson(body, headers) {
   } else {
     return parsed;
   }
+}
+function encodeToUrlEncoded(data) {
+  return (0, import_querystring.stringify)(data);
+}
+function encodeToFormData(data, boundary) {
+  let retBuffer = Buffer.from("");
+  data.forEach((form) => {
+    if (typeof form.value === "string") {
+      retBuffer = Buffer.concat([
+        retBuffer,
+        Buffer.from(`--${boundary}\r
+`),
+        Buffer.from(form.rawHeader),
+        Buffer.from("\r\n\r\n"),
+        Buffer.from(form.value)
+      ]);
+    } else if (form.value instanceof Buffer) {
+      retBuffer = Buffer.concat([
+        retBuffer,
+        Buffer.from(`--${boundary}\r
+`),
+        Buffer.from(form.rawHeader),
+        Buffer.from("\r\n\r\n"),
+        form.value
+      ]);
+    } else {
+      form.value.forEach((v) => {
+        retBuffer = Buffer.concat([
+          retBuffer,
+          Buffer.from(`--${boundary}\r
+`),
+          Buffer.from(form.rawHeader),
+          Buffer.from("\r\n\r\n"),
+          Buffer.from(v)
+        ]);
+      });
+    }
+    retBuffer = Buffer.concat([retBuffer, Buffer.from("\r\n")]);
+  });
+  retBuffer = Buffer.concat([retBuffer, Buffer.from(`--${boundary}--`)]);
+  return retBuffer;
+}
+function encodeToJson(data) {
+  return JSON.stringify(data);
 }
 function parseEncode(body, encoding) {
   if (!(encoding && encoding in CONTENT_TYPES)) {
@@ -147,13 +216,13 @@ function parseEncode(body, encoding) {
 }
 function parseContent(body, contentType) {
   if (!contentType) {
-    return parseToText(body);
+    return { type: "string", value: parseToText(body) };
   }
   if (BINARY_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
-    return body;
+    return { type: "binary", value: body };
   }
   const charset = /charset=([^;\s]+)/.exec(contentType)?.[1];
-  return parseToText(body, charset);
+  return { type: "string", value: parseToText(body, charset) };
 }
 function parseToText(body, charset) {
   const lowerCharset = charset?.toLowerCase();
@@ -161,6 +230,7 @@ function parseToText(body, charset) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  encodeRequestData,
   parse,
   parseReuqestData
 });
