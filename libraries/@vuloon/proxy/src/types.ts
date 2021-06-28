@@ -1,4 +1,34 @@
-export type RequestData = string | Buffer | NodeJS.Dict<string | string[]> | FormData[] | Json;
+export type RequestData =
+  | StringRequestData
+  | BinaryRequestData
+  | UrlEncodedRequestData
+  | FormRequestData
+  | JsonRequetData;
+
+export interface StringRequestData {
+  type: 'string';
+  value: string;
+}
+
+export interface BinaryRequestData {
+  type: 'binary';
+  value: Buffer;
+}
+
+export interface UrlEncodedRequestData {
+  type: 'urlencoded';
+  value: NodeJS.Dict<string | string[]>;
+}
+
+export interface FormRequestData {
+  type: 'formdata';
+  value: FormData[];
+}
+
+export interface JsonRequetData {
+  type: 'json';
+  value: Json;
+}
 export interface FormData {
   key: string;
   value: string | Buffer | string[];

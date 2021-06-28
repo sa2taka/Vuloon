@@ -3,7 +3,16 @@ import { IncomingHttpHeaders } from 'http';
 import { decode } from 'iconv-lite';
 import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
 import { unzipSync } from 'zlib';
-import { FormData, Json, RequestData } from './types';
+import {
+  BinaryRequestData,
+  FormData,
+  Json,
+  RequestData,
+  StringRequestData,
+  UrlEncodedRequestData,
+  FormRequestData,
+  JsonRequetData,
+} from './types';
 
 /**
  * Content-Encoding is in these values.
@@ -17,7 +26,7 @@ const CONTENT_TYPES = ['x-gzip', 'gzip', 'compress', 'deflate', 'identity', 'br'
  */
 const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
 
-export function parse(body: Buffer, headers: IncomingHttpHeaders): string | Buffer {
+export function parse(body: Buffer, headers: IncomingHttpHeaders): StringRequestData | BinaryRequestData {
   const encoding = headers['content-encoding'];
   const contentType = headers['content-type'];
 
@@ -42,40 +51,40 @@ export function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): Re
 }
 
 export function encodeRequestData(data: RequestData, contentType?: string): Buffer {
-  if (data instanceof Buffer) {
-    return data;
+  if (data.type === 'binary') {
+    return data.value;
   }
-  if (typeof data === 'string') {
-    return Buffer.from(data);
-  }
-
-  if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
-    return Buffer.from(encodeToUrlEncoded(data as NodeJS.Dict<string | string[]>));
+  if (data.type === 'string') {
+    return Buffer.from(data.value);
   }
 
-  if (contentType?.match(/^multipart\/form-data/)) {
+  if (data.type === 'urlencoded') {
+    return Buffer.from(encodeToUrlEncoded(data.value));
+  }
+
+  if (data.type === 'formdata') {
     const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
     assert(boundary);
-    return encodeToFormData(data as FormData[], boundary![1]);
+    return encodeToFormData(data.value, boundary![1]);
   }
 
-  if (contentType?.match(/^application\/json/)) {
-    return Buffer.from(encodeToJson(data as Json));
+  if (data.type === 'json') {
+    return Buffer.from(encodeToJson(data.value));
   }
 
   return Buffer.from('');
 }
 
-function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders) {
+function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders): UrlEncodedRequestData | BinaryRequestData {
   const parsed = parse(body, headers);
-  if (typeof parsed === 'string') {
-    return parseQueryString(parsed);
+  if (parsed.type === 'string') {
+    return { type: 'urlencoded', value: parseQueryString(parsed.value) };
   } else {
     return parsed;
   }
 }
 
-function parseForFormData(body: Buffer, headers: IncomingHttpHeaders) {
+function parseForFormData(body: Buffer, headers: IncomingHttpHeaders): FormRequestData {
   const contentType = headers['content-type'];
   assert(contentType);
   const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
@@ -94,7 +103,7 @@ function parseForFormData(body: Buffer, headers: IncomingHttpHeaders) {
     }
   });
 
-  return partData;
+  return { type: 'formdata', value: partData };
 }
 
 function divideByBoundary(body: Buffer, boundary: string) {
@@ -149,7 +158,7 @@ function parseFormDataPart(partData: Buffer): FormData {
 
   const contentType = headers.find((h) => h['header'].toLowerCase() === 'content-type');
 
-  const value = parseContent(dataBuffer, contentType?.value);
+  const { value } = parseContent(dataBuffer, contentType?.value);
 
   return {
     key: name[1],
@@ -229,18 +238,18 @@ function parseEncode(body: Buffer, encoding?: string) {
   }
 }
 
-function parseContent(body: Buffer, contentType?: string) {
+function parseContent(body: Buffer, contentType?: string): StringRequestData | BinaryRequestData {
   if (!contentType) {
-    return parseToText(body);
+    return { type: 'string', value: parseToText(body) };
   }
 
   if (BINARY_CONTENT_TYPES.some((regexp) => regexp.test(contentType))) {
-    return body;
+    return { type: 'binary', value: body };
   }
 
   const charset = /charset=([^;\s]+)/.exec(contentType)?.[1];
 
-  return parseToText(body, charset);
+  return { type: 'string', value: parseToText(body, charset) };
 }
 
 function parseToText(body: Buffer, charset?: string) {

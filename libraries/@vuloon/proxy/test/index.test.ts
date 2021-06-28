@@ -19,7 +19,7 @@ afterAll(() => {
 describe('Proxy', () => {
   test('normal', async () => {
     proxy.addResponseListener('id', ({ data }) => {
-      expect(data).toBe('vuloon_test');
+      expect(data.value).toBe('vuloon_test');
     });
 
     await getWithProxy();
@@ -28,7 +28,7 @@ describe('Proxy', () => {
   describe('charset', () => {
     test('utf-8', async () => {
       proxy.addResponseListener('id', ({ data }) => {
-        expect(data).toBe('日本語テスト');
+        expect(data.value).toBe('日本語テスト');
       });
 
       await getWithProxy('/charset/utf8');
@@ -36,7 +36,7 @@ describe('Proxy', () => {
 
     test('shift_jis', async () => {
       proxy.addResponseListener('id', ({ data }) => {
-        expect(data).toBe('日本語テスト');
+        expect(data.value).toBe('日本語テスト');
       });
 
       await getWithProxy('/charset/shift_jis');
@@ -46,7 +46,7 @@ describe('Proxy', () => {
   describe('binary', () => {
     test('image/png', async () => {
       proxy.addResponseListener('id', ({ data }) => {
-        expect(data).toEqual(Buffer.from([1, 2, 3]));
+        expect(data.value).toEqual(Buffer.from([1, 2, 3]));
       });
 
       await getWithProxy('/image/png');
