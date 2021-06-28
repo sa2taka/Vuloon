@@ -5,10 +5,15 @@ import { Proxy } from '../src/index';
 
 let mockServer: Server;
 let proxy: Proxy;
+
 beforeAll(() => {
+  mockServer = createMock().listen(2345);
+});
+
+beforeEach(() => {
+  proxy?.stop();
   proxy = new Proxy(5110);
   proxy.start();
-  mockServer = createMock().listen(2345);
 });
 
 afterAll(() => {
@@ -54,19 +59,94 @@ describe('Proxy', () => {
   });
 
   describe('request', () => {
+    test('application/x-www-form-urlencoded', async () => {
+      proxy.addRequestListener('id', ({ data }) => {
+        expect(data.value).toEqual({
+          key: ['value', 'value2'],
+          nextKey: 'nextValue',
+        });
+      });
+
+      await postWithProxy('/direct/header', 'key=value&key=value2&nextKey=nextValue', {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      });
+    });
+
     test('multipart/form-data', async () => {
-      proxy.addRequestListener('id', (a, rawHttp) => {
-        console.log(rawHttp);
-        return a;
+      proxy.addRequestListener('id', ({ data }) => {
+        expect(data.value).toEqual([
+          {
+            key: 'message',
+            value: ['Hello', 'World'],
+            filename: undefined,
+            filenameAster: undefined,
+            rawHeader: 'Content-Disposition: form-data; name="message"',
+          },
+          {
+            key: 'file',
+            value: 'aaa',
+            filename: 'a.txt',
+            filenameAster: undefined,
+            rawHeader: 'Content-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain',
+          },
+        ]);
       });
 
       await postWithProxy(
-        '/',
-        '--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary--',
+        '/direct/header',
+        '--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nWorld\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary--',
         {
           'Content-Type': 'multipart/form-data; boundary=boundary',
         }
       );
+    });
+
+    test('application/json', async () => {
+      proxy.addRequestListener('id', ({ data }) => {
+        expect(data.value).toEqual({
+          key: 'value',
+          numberKey: 5110,
+          arrayKey: [1, 2, 3],
+          objectKey: {
+            nestedKey: 'nestedValue',
+            nestedNumber: 51101,
+          },
+        });
+      });
+
+      await postWithProxy(
+        '/direct/header',
+        '{"key": "value","numberKey": 5110,"arrayKey":[1, 2, 3],"objectKey":{"nestedKey":"nestedValue","nestedNumber":51101}}',
+        {
+          'Content-Type': 'application/json',
+        }
+      );
+    });
+  });
+
+  describe('callable', () => {
+    test('get', async () => {
+      const requestListener = jest.fn();
+      const responseListener = jest.fn();
+
+      proxy.addRequestListener('id', requestListener);
+      proxy.addResponseListener('id', responseListener);
+
+      await getWithProxy();
+      expect(requestListener).toBeCalledTimes(1);
+      expect(responseListener).toBeCalledTimes(1);
+    });
+
+    test('post', async () => {
+      const requestListener = jest.fn();
+      const responseListener = jest.fn();
+
+      proxy.addRequestListener('id', requestListener);
+      proxy.addResponseListener('id', responseListener);
+
+      await postWithProxy();
+      expect(requestListener).toBeCalledTimes(1);
+      expect(responseListener).toBeCalledTimes(1);
     });
   });
 });
@@ -93,7 +173,7 @@ function postWithProxy(path = '/', data = '', headers: Record<string, string> = 
   return new Promise((resolve) => {
     const options = {
       host: 'localhost',
-      port: 80,
+      port: 2345,
       path: path,
       method: 'POST',
       agent,
@@ -126,6 +206,7 @@ function createMock() {
     });
 
     clientRequest.on('end', () => {
+      let text = '';
       switch (clientRequest.url) {
         case '/image/png':
           clientResponse.writeHead(200, { 'Content-Type': 'image/png' });
@@ -144,6 +225,11 @@ function createMock() {
           clientResponse.write(encode('日本語テスト', 'shift_jis'));
           break;
         case '/direct/header':
+          for (let i = 0; i < clientRequest.rawHeaders.length; i += 2) {
+            text += `${clientRequest.rawHeaders[i]}: ${clientRequest.rawHeaders[i + 1]}\r\n`;
+          }
+          clientResponse.write(text);
+          break;
         case '/direct/body':
           clientResponse.write(buffer);
           break;

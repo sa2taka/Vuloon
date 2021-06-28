@@ -210,6 +210,7 @@ function encodeToFormData(data: FormData[], boundary: string) {
           Buffer.from(form.rawHeader),
           Buffer.from('\r\n\r\n'),
           Buffer.from(v),
+          Buffer.from('\r\n'),
         ]);
       });
     }

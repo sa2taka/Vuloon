@@ -138,6 +138,8 @@ export class Proxy {
 
       const data = encodeRequestData(parsed, _requestData.headers['content-type']);
 
+      _requestData.headers['content-length'] = data.length.toString();
+
       const serverRequest = request({
         host: requestUrl.hostname,
         port: requestUrl.port,
