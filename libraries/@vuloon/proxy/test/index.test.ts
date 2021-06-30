@@ -1,4 +1,5 @@
 import { createServer, get, Server, request } from 'http';
+import { get as getHttps } from 'https';
 import { encode } from 'iconv-lite';
 import ProxyAgent from 'proxy-agent';
 import { Proxy } from '../src/index';
@@ -8,26 +9,36 @@ let proxy: Proxy;
 
 beforeAll(() => {
   mockServer = createMock().listen(2345);
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 });
 
 beforeEach(() => {
   proxy?.stop();
-  proxy = new Proxy(5110);
+  proxy = new Proxy({
+    port: 5110,
+    ssl: {
+      caDir: __dirname + '/../ca',
+      port: 5443,
+    },
+  });
   proxy.start();
 });
 
 afterAll(() => {
-  proxy.stop();
+  proxy?.stop();
   mockServer.close();
 });
 
 describe('Proxy', () => {
   test('normal', async () => {
+    const fn = jest.fn();
     proxy.addResponseListener('id', ({ data }) => {
       expect(data.value).toBe('vuloon_test');
+      fn();
     });
 
     await getWithProxy();
+    expect(fn).toBeCalled();
   });
 
   describe('charset', () => {
@@ -149,6 +160,10 @@ describe('Proxy', () => {
       expect(responseListener).toBeCalledTimes(1);
     });
   });
+
+  test('https', async () => {
+    await getHttpsWithProxy();
+  });
 });
 
 function getWithProxy(path = '/') {
@@ -158,6 +173,23 @@ function getWithProxy(path = '/') {
       {
         port: 2345,
         host: 'localhost',
+        path: path,
+        agent,
+      },
+      (res) => {
+        resolve(res);
+      }
+    );
+  });
+}
+
+function getHttpsWithProxy(path = '/') {
+  const agent = new ProxyAgent('http://localhost:5110');
+  return new Promise((resolve) => {
+    getHttps(
+      {
+        port: 443,
+        host: 'blog.sa2taka.com',
         path: path,
         agent,
       },

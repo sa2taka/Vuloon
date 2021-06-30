@@ -24,36 +24,74 @@ var __toModule = (module2) => {
 __export(exports, {
   Proxy: () => Proxy
 });
+var import_fs = __toModule(require("fs"));
 var import_http = __toModule(require("http"));
+var import_https = __toModule(require("https"));
+var import_net = __toModule(require("net"));
+var import_node_forge = __toModule(require("node-forge"));
 var import_proxy_agent = __toModule(require("proxy-agent"));
 var import_bodyParser = __toModule(require("./bodyParser"));
+var import_ca = __toModule(require("./ca"));
+var import_semaphore = __toModule(require("./semaphore"));
 var import_textify = __toModule(require("./textify"));
 class Proxy {
   #port;
+  #sslPort;
   #nextProxy;
   #server;
+  #sslServer;
   #requestListeners;
   #responseListeners;
-  constructor(port, nextProxy) {
+  #options;
+  #connectRequests = {};
+  #sslServers = {};
+  #sslSemaphores = {};
+  #ca;
+  #RootKeyFilePath = "root/key.pem";
+  #RootCertFilePath = "root/cert.pem";
+  constructor(options) {
     this.#requestListeners = {};
     this.#responseListeners = {};
-    this.#port = port || 5110;
-    const nextProxyUrl = nextProxy ? new URL(nextProxy) : void 0;
+    this.#options = options;
+    this.#port = options.port || 5110;
+    this.#sslPort = options.ssl.port || 5443;
+    const nextProxyUrl = options.nextProxy ? new URL(options.nextProxy) : void 0;
     this.#nextProxy = nextProxyUrl;
     this.#initializeServer();
+    this.#initializeHttpsServer();
+    this.#initializeCa();
+  }
+  #initializeCa() {
+    const rootKeyFilePath = `${this.#options.ssl.caDir}/${this.#RootKeyFilePath}`;
+    const isRootKeyFileExists = (0, import_fs.existsSync)(rootKeyFilePath);
+    const rootCertFilePath = `${this.#options.ssl.caDir}/${this.#RootCertFilePath}`;
+    const isRootCertFileExists = (0, import_fs.existsSync)(rootCertFilePath);
+    if (!isRootCertFileExists || !isRootKeyFileExists) {
+      const { privateKey, certificate } = import_ca.Ca.createRootCertificate();
+      (0, import_fs.writeFileSync)(rootKeyFilePath, import_node_forge.pki.privateKeyToPem(privateKey));
+      (0, import_fs.writeFileSync)(rootCertFilePath, import_node_forge.pki.certificateToPem(certificate));
+    }
+    this.#ca = new import_ca.Ca(rootKeyFilePath, rootCertFilePath);
   }
   #initializeServer() {
-    this.#server = (0, import_http.createServer)(this.#onRequest.bind(this));
+    this.#server = (0, import_http.createServer)(this.#onRequest.bind(this, false)).on("error", this.#onError.bind(this)).on("clientError", this.#onError.bind(this)).on("connect", this.#onHttpsConnect.bind(this));
+  }
+  #initializeHttpsServer() {
+    this.#sslServer = (0, import_https.createServer)({});
+  }
+  #createHttpsServer(options) {
+    return (0, import_https.createServer)(options, this.#onRequest.bind(this, true)).on("error", this.#onError.bind(this)).on("clientError", this.#onError.bind(this)).on("connect", this.#onHttpsConnect.bind(this));
   }
   start() {
-    try {
-      this.#server.listen(this.#port);
-    } catch (e) {
-      console.error(e);
-    }
+    this.#server.listen(this.#port);
+    this.#sslServer.listen(this.#sslPort);
   }
   stop() {
     this.#server.close();
+    this.#sslServer.close();
+    Object.values(this.#sslServers).forEach((server) => {
+      server.sslServer?.close();
+    });
   }
   addResponseListener(id, listener) {
     this.#responseListeners[id] = {
@@ -71,7 +109,7 @@ class Proxy {
   removeRequestListener(id) {
     delete this.#requestListeners[id];
   }
-  #onRequest(requestData, response) {
+  #onRequest(isSsl, requestData, response) {
     let buffer = Buffer.from([]);
     requestData.on("data", (data) => {
       buffer = Buffer.concat([buffer, data]);
@@ -86,6 +124,9 @@ class Proxy {
         requestUrl = new URL(requestData.url);
       } catch (e) {
         console.error(e);
+        response.writeHead(400);
+        response.write("vuloon proxy");
+        response.end();
         return;
       }
       let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
@@ -103,7 +144,14 @@ class Proxy {
       const data = (0, import_bodyParser.encodeRequestData)(parsed, _requestData.headers["content-type"]);
       _requestData.headers["content-length"] = data.length.toString();
       _requestData.headers["x-vuloon-proxy"] = "true";
-      const serverRequest = (0, import_http.request)({
+      const headers = {};
+      for (const h in requestData.headers) {
+        if (!/^proxy-/i.test(h)) {
+          headers[h] = requestData.headers[h];
+        }
+      }
+      const request = isSsl ? import_https.request : import_http.request;
+      const serverRequest = request({
         host: requestUrl.hostname,
         port: requestUrl.port,
         method: requestData.method,
@@ -135,6 +183,118 @@ class Proxy {
         }, httpText);
       });
     });
+  }
+  #onHttpsConnect(clientRequest, clientSocket, clientHead) {
+    clientSocket.on("error", this.#onError.bind(this));
+    if (!clientHead || clientHead.length === 0) {
+      clientSocket.once("data", this.#onHttpServerConnectData.bind(this, clientRequest, clientSocket));
+      clientSocket.write("HTTP/1.1 200 OK\r\n");
+      if (this.#options.keepAlive && clientRequest.headers["proxy-connection"] === "keep-alive") {
+        clientSocket.write("Proxy-Connection: keep-alive\r\n");
+        clientSocket.write("Connection: keep-alive\r\n");
+      }
+      clientSocket.write("\r\n");
+    }
+  }
+  #onHttpServerConnectData(request, socket, head) {
+    socket.pause();
+    if (head[0] == 22 || head[0] == 128 || head[0] == 0) {
+      const hostname = request.url.split(":", 2)[0];
+      const sslServer = this.#sslServers[hostname];
+      if (sslServer) {
+        return this.#makeConnection(request, socket, head, sslServer.port);
+      }
+      const wildcardHost = hostname.replace(/[^.]+\./, "*.");
+      let semaphore = this.#sslSemaphores[wildcardHost];
+      if (!semaphore) {
+        semaphore = this.#sslSemaphores[wildcardHost] = new import_semaphore.Semaphore(1);
+      }
+      semaphore.use(async () => {
+        if (this.#sslServers[hostname]) {
+          return this.#makeConnection(request, socket, head, this.#sslServers[hostname].port);
+        }
+        if (this.#sslServers[wildcardHost]) {
+          this.#sslServers[hostname] = this.#sslServers[wildcardHost];
+          return this.#makeConnection(request, socket, head, this.#sslServers[hostname].port);
+        }
+        this.#generateHttpsServer(hostname);
+        this.#makeConnection(request, socket, head, this.#sslPort);
+      });
+    } else {
+      return this.#makeConnection(request, socket, head, this.#port);
+    }
+  }
+  #onError(error) {
+    console.error(error);
+  }
+  #makeConnection(request, socket, head, port) {
+    const conn = (0, import_net.connect)({
+      port,
+      allowHalfOpen: true
+    }, () => {
+      conn.on("finish", () => {
+        socket.destroy();
+      });
+      socket.on("close", () => {
+        conn.end();
+      });
+      const connectKey = conn.localPort + ":" + conn.remotePort;
+      this.#connectRequests[connectKey] = request;
+      socket.pipe(conn);
+      conn.pipe(socket);
+      socket.emit("data", head);
+      return socket.resume();
+    });
+    conn.on("error", this.#onError.bind(this));
+  }
+  #generateHttpsServer(hostname) {
+    const { privateKeyPem, certificatePem } = this.#generateServerKeyAndCertificate(hostname);
+    if (!hostname.match(/^[\d.]+$/)) {
+      this.#sslServer.addContext(hostname, {
+        key: privateKeyPem,
+        cert: certificatePem
+      });
+      this.#sslServers[hostname] = { port: this.#sslPort };
+      return;
+    } else {
+      const server = this.#createHttpsServer({ key: privateKeyPem, cert: certificatePem });
+      const address = server.address();
+      if (address && typeof address !== "string") {
+        const sslServer = {
+          server,
+          port: address.port
+        };
+        this.#sslServers[hostname] = sslServer;
+      }
+    }
+  }
+  #generateServerKeyAndCertificate(host) {
+    const keyFile = this.#getKeyFile(host);
+    const isKeyFileExists = (0, import_fs.existsSync)(keyFile);
+    const certFile = this.#getCertFile(host);
+    const isCertFileExists = (0, import_fs.existsSync)(certFile);
+    if (isKeyFileExists && isCertFileExists) {
+      return {
+        privateKeyPem: (0, import_fs.readFileSync)(keyFile).toString(),
+        certificatePem: (0, import_fs.readFileSync)(certFile).toString()
+      };
+    } else {
+      const { privateKey, certificate } = this.#ca.generateServerCertificates(host);
+      const privateKeyPem = import_node_forge.pki.privateKeyToPem(privateKey);
+      (0, import_fs.writeFileSync)(keyFile, privateKeyPem);
+      const certificatePem = import_node_forge.pki.certificateToPem(certificate);
+      (0, import_fs.writeFileSync)(certFile, certificatePem);
+      return {
+        privateKeyPem,
+        certificatePem
+      };
+    }
+  }
+  #getKeyFile(host) {
+    return `${this.#options.ssl.caDir}/keys/${host}.key`;
+  }
+  #getCertFile(host) {
+    return `${this.#options.ssl.caDir}/certs/${host}.crt`;
   }
 }
 // Annotate the CommonJS export names for ESM import in node:

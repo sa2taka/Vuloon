@@ -15,6 +15,15 @@ export interface RequestListener {
 export interface ResponseListener {
     listener: (response: ResponsArgs, rawHttp: string) => void;
 }
+export interface Options {
+    port?: number;
+    nextProxy?: string;
+    keepAlive?: string;
+    ssl: {
+        port?: number;
+        caDir: string;
+    };
+}
 export declare class Proxy {
     #private;
     /**
@@ -22,7 +31,7 @@ export declare class Proxy {
      * @param port proxy port (default: 5110)
      * @param nextProxy next proxy url if using multiproxy
      */
-    constructor(port?: number, nextProxy?: string);
+    constructor(options: Options);
     /**
      * Start to listen.
      */
