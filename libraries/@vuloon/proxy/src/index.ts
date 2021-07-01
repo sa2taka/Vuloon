@@ -102,9 +102,21 @@ export class Proxy {
     const rootCertFilePath = `${this.#options.ssl.caDir}/${this.#RootCertFilePath}`;
     const isRootCertFileExists = existsSync(rootCertFilePath);
     if (!isRootCertFileExists || !isRootKeyFileExists) {
+      const certParentDir = dirname(this.rootCertPath);
+      mkdirpSync(keyParentDir);
+      mkdirpSync(certParentDir);
+
       const { privateKey, certificate } = Ca.createRootCertificate();
       writeFileSync(rootKeyFilePath, pki.privateKeyToPem(privateKey));
       writeFileSync(rootCertFilePath, pki.certificateToPem(certificate));
+    }
+
+    if (!existsSync(this.keyPath)) {
+      mkdirpSync(this.keyPath);
+    }
+
+    if (!existsSync(this.certPath)) {
+      mkdirpSync(this.certPath);
     }
 
     this.#ca = new Ca(rootKeyFilePath, rootCertFilePath);
