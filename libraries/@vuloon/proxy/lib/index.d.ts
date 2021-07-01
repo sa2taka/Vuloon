@@ -10,10 +10,10 @@ export interface ResponsArgs {
     data: RequestData;
 }
 export interface RequestListener {
-    listener: (request: RequestArgs, rawHttp: string) => RequestArgs | void;
+    listener: (request: RequestArgs, rawHttp: string, id: string) => RequestArgs | void;
 }
 export interface ResponseListener {
-    listener: (response: ResponsArgs, rawHttp: string) => void;
+    listener: (response: ResponsArgs, rawHttp: string, id: string) => void;
 }
 export interface Options {
     port?: number;
@@ -26,6 +26,10 @@ export interface Options {
 }
 export declare class Proxy {
     #private;
+    get rootKeyPath(): string;
+    get rootCertPath(): string;
+    get keyPath(): string;
+    get certPath(): string;
     /**
      * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or detault port, 5110)
      * @param port proxy port (default: 5110)

@@ -2,7 +2,7 @@ import { assert } from 'console';
 import { IncomingHttpHeaders } from 'http';
 import { decode } from 'iconv-lite';
 import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
-import { unzipSync } from 'zlib';
+import { brotliDecompressSync, unzipSync } from 'zlib';
 import {
   BinaryRequestData,
   FormData,
@@ -18,7 +18,7 @@ import {
  * Content-Encoding is in these values.
  * ref: https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Content-Encoding
  */
-const CONTENT_TYPES = ['x-gzip', 'gzip', 'compress', 'deflate', 'identity', 'br'] as const;
+const CONTENT_TYPES = ['x-gzip', 'gzip', 'compress', 'deflate', 'identity', 'br'];
 
 /**
  * These content types is not parse to string but binary.
@@ -169,11 +169,18 @@ function parseFormDataPart(partData: Buffer): FormData {
   };
 }
 
-function parseForJson(body: Buffer, headers: IncomingHttpHeaders): JsonRequetData | BinaryRequestData {
+function parseForJson(
+  body: Buffer,
+  headers: IncomingHttpHeaders
+): JsonRequetData | StringRequestData | BinaryRequestData {
   const parsed = parse(body, headers);
-  if (parsed.type === 'string') {
-    return { type: 'json', value: JSON.parse(parsed.value) };
-  } else {
+  try {
+    if (parsed.type === 'string') {
+      return { type: 'json', value: JSON.parse(parsed.value) };
+    } else {
+      return parsed;
+    }
+  } catch (_) {
     return parsed;
   }
 }
@@ -225,7 +232,7 @@ function encodeToJson(data: Json) {
 }
 
 function parseEncode(body: Buffer, encoding?: string) {
-  if (!(encoding && encoding in CONTENT_TYPES)) {
+  if (!(encoding && CONTENT_TYPES.includes(encoding))) {
     return body;
   }
 
@@ -234,6 +241,8 @@ function parseEncode(body: Buffer, encoding?: string) {
     case 'gzip':
     case 'deflate':
       return unzipSync(body);
+    case 'br':
+      return brotliDecompressSync(body);
     default:
       return body;
   }

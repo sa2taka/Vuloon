@@ -73,7 +73,7 @@ class Ca {
   static RootSubject = [
     {
       name: "commonName",
-      value: "NodeMITMProxyCA"
+      value: "VuloonProxyCA"
     },
     {
       name: "countryName",
@@ -89,7 +89,7 @@ class Ca {
     },
     {
       name: "organizationName",
-      value: "Node MITM Proxy CA"
+      value: "VuloonProxyCA"
     },
     {
       shortName: "OU",
@@ -146,11 +146,11 @@ class Ca {
     },
     {
       name: "organizationName",
-      value: "Node MITM Proxy CA"
+      value: "VuloonProxyCA"
     },
     {
       shortName: "OU",
-      value: "Node MITM Proxy Server Certificate"
+      value: "VuloonProxyOU"
     }
   ];
   static ServerExtensions = [

@@ -151,9 +151,13 @@ function parseFormDataPart(partData) {
 }
 function parseForJson(body, headers) {
   const parsed = parse(body, headers);
-  if (parsed.type === "string") {
-    return { type: "json", value: JSON.parse(parsed.value) };
-  } else {
+  try {
+    if (parsed.type === "string") {
+      return { type: "json", value: JSON.parse(parsed.value) };
+    } else {
+      return parsed;
+    }
+  } catch (_) {
     return parsed;
   }
 }
@@ -203,7 +207,7 @@ function encodeToJson(data) {
   return JSON.stringify(data);
 }
 function parseEncode(body, encoding) {
-  if (!(encoding && encoding in CONTENT_TYPES)) {
+  if (!(encoding && CONTENT_TYPES.includes(encoding))) {
     return body;
   }
   switch (encoding) {
@@ -211,6 +215,8 @@ function parseEncode(body, encoding) {
     case "gzip":
     case "deflate":
       return (0, import_zlib.unzipSync)(body);
+    case "br":
+      return (0, import_zlib.brotliDecompressSync)(body);
     default:
       return body;
   }

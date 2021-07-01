@@ -160,10 +160,6 @@ describe('Proxy', () => {
       expect(responseListener).toBeCalledTimes(1);
     });
   });
-
-  test('https', async () => {
-    await getHttpsWithProxy();
-  });
 });
 
 function getWithProxy(path = '/') {
@@ -194,6 +190,7 @@ function getHttpsWithProxy(path = '/') {
         agent,
       },
       (res) => {
+        console.log(res);
         resolve(res);
       }
     );
