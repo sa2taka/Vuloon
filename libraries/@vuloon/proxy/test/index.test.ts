@@ -71,7 +71,7 @@ describe('Proxy', () => {
 
   describe('request', () => {
     test('application/x-www-form-urlencoded', async () => {
-      proxy.addRequestListener('id', ({ data }) => {
+      proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual({
           key: ['value', 'value2'],
           nextKey: 'nextValue',
@@ -84,7 +84,7 @@ describe('Proxy', () => {
     });
 
     test('multipart/form-data', async () => {
-      proxy.addRequestListener('id', ({ data }) => {
+      proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual([
           {
             key: 'message',
@@ -113,7 +113,7 @@ describe('Proxy', () => {
     });
 
     test('application/json', async () => {
-      proxy.addRequestListener('id', ({ data }) => {
+      proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual({
           key: 'value',
           numberKey: 5110,

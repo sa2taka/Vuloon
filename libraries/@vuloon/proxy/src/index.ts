@@ -36,7 +36,7 @@ export interface ResponsArgs {
 }
 
 export interface RequestListener {
-  listener: (request: RequestArgs, rawHttp: string, id: string) => RequestArgs | void;
+  listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
 }
 
 export interface ResponseListener {
@@ -225,7 +225,7 @@ export class Proxy {
       buffer = Buffer.concat([buffer, data]);
     });
 
-    requestData.on('end', () => {
+    requestData.on('end', async () => {
       let _requestData = requestData;
       if (!requestData.url) {
         return;
@@ -243,22 +243,24 @@ export class Proxy {
       let parsed = parseReuqestData(buffer, requestData.headers);
 
       const uuid = randomUUID();
-      Object.values(this.#requestListeners).forEach(({ listener }) => {
-        const httpText = textifyRequest(_requestData, parsed);
-        const result = listener(
-          {
-            request: _requestData,
-            data: parsed,
-          },
-          httpText,
-          uuid
-        );
+      await Promise.all(
+        Object.values(this.#requestListeners).map(async ({ listener }) => {
+          const httpText = textifyRequest(_requestData, parsed);
+          const result = await listener(
+            {
+              request: _requestData,
+              data: parsed,
+            },
+            httpText,
+            uuid
+          );
 
-        if (result) {
-          _requestData = result.request;
-          parsed = result.data;
-        }
-      });
+          if (result) {
+            _requestData = result.request;
+            parsed = result.data;
+          }
+        })
+      );
 
       const data = encodeRequestData(parsed, _requestData.headers['content-type']);
 
