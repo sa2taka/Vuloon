@@ -167,12 +167,13 @@ function encodeToUrlEncoded(data) {
 function encodeToFormData(data, boundary) {
   let retBuffer = Buffer.from("");
   data.forEach((form) => {
+    const rawHeader = form.rawHeader ?? generateSimpleHeader(form);
     if (typeof form.value === "string") {
       retBuffer = Buffer.concat([
         retBuffer,
         Buffer.from(`--${boundary}\r
 `),
-        Buffer.from(form.rawHeader),
+        Buffer.from(rawHeader),
         Buffer.from("\r\n\r\n"),
         Buffer.from(form.value)
       ]);
@@ -181,7 +182,7 @@ function encodeToFormData(data, boundary) {
         retBuffer,
         Buffer.from(`--${boundary}\r
 `),
-        Buffer.from(form.rawHeader),
+        Buffer.from(rawHeader),
         Buffer.from("\r\n\r\n"),
         form.value
       ]);
@@ -191,7 +192,7 @@ function encodeToFormData(data, boundary) {
           retBuffer,
           Buffer.from(`--${boundary}\r
 `),
-          Buffer.from(form.rawHeader),
+          Buffer.from(rawHeader),
           Buffer.from("\r\n\r\n"),
           Buffer.from(v),
           Buffer.from("\r\n")
@@ -202,6 +203,24 @@ function encodeToFormData(data, boundary) {
   });
   retBuffer = Buffer.concat([retBuffer, Buffer.from(`--${boundary}--`)]);
   return retBuffer;
+}
+function generateSimpleHeader(data) {
+  let headerText = `Content-Disposition: formdata; name ="${data.key}"`;
+  if (data.filename) {
+    headerText += `; filename=${data.filename}`;
+  }
+  if (data.filenameAster) {
+    headerText += `; filename*=${data.filenameAster}`;
+  }
+  headerText += "\r\n";
+  if (data.value instanceof Buffer) {
+    headerText += `Content-Type: application/octet-stream\r
+`;
+  } else {
+    headerText += `Content-Type: text/plain\r
+`;
+  }
+  return headerText;
 }
 function encodeToJson(data) {
   return JSON.stringify(data);

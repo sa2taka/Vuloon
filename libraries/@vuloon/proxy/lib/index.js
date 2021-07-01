@@ -24,19 +24,19 @@ var __toModule = (module2) => {
 __export(exports, {
   Proxy: () => Proxy
 });
+var import_crypto = __toModule(require("crypto"));
 var import_fs = __toModule(require("fs"));
 var import_http = __toModule(require("http"));
 var import_https = __toModule(require("https"));
+var import_mkdirp = __toModule(require("mkdirp"));
 var import_net = __toModule(require("net"));
 var import_node_forge = __toModule(require("node-forge"));
+var import_path = __toModule(require("path"));
 var import_proxy_agent = __toModule(require("proxy-agent"));
 var import_bodyParser = __toModule(require("./bodyParser"));
 var import_ca = __toModule(require("./ca"));
 var import_semaphore = __toModule(require("./semaphore"));
 var import_textify = __toModule(require("./textify"));
-var import_mkdirp = __toModule(require("mkdirp"));
-var import_path = __toModule(require("path"));
-var import_crypto = __toModule(require("crypto"));
 class Proxy {
   #port;
   #sslPort;
@@ -149,7 +149,7 @@ class Proxy {
     requestData.on("data", (data) => {
       buffer = Buffer.concat([buffer, data]);
     });
-    requestData.on("end", () => {
+    requestData.on("end", async () => {
       let _requestData = requestData;
       if (!requestData.url) {
         return;
@@ -164,17 +164,20 @@ class Proxy {
       const { host, port } = parseHost;
       let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
       const uuid = (0, import_crypto.randomUUID)();
-      Object.values(this.#requestListeners).forEach(({ listener }) => {
+      for (const { listener } of Object.values(this.#requestListeners)) {
         const httpText = (0, import_textify.textifyRequest)(_requestData, parsed);
-        const result = listener({
-          request: _requestData,
-          data: parsed
-        }, httpText, uuid);
-        if (result) {
-          _requestData = result.request;
-          parsed = result.data;
+        try {
+          const result = await listener({
+            request: _requestData,
+            data: parsed
+          }, httpText, uuid);
+          if (result) {
+            _requestData = result.request;
+            parsed = result.data;
+          }
+        } catch (e) {
         }
-      });
+      }
       const data = (0, import_bodyParser.encodeRequestData)(parsed, _requestData.headers["content-type"]);
       _requestData.headers["content-length"] = data.length.toString();
       _requestData.headers["x-vuloon-proxy"] = "true";

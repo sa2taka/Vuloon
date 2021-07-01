@@ -3,6 +3,7 @@ import { get as getHttps } from 'https';
 import { encode } from 'iconv-lite';
 import ProxyAgent from 'proxy-agent';
 import { Proxy } from '../src/index';
+import { JsonObject } from '../src/types';
 
 let mockServer: Server;
 let proxy: Proxy;
@@ -42,48 +43,61 @@ describe('Proxy', () => {
   });
 
   describe('charset', () => {
+    const fn = jest.fn();
     test('utf-8', async () => {
       proxy.addResponseListener('id', ({ data }) => {
         expect(data.value).toBe('日本語テスト');
+        fn();
       });
 
       await getWithProxy('/charset/utf8');
+      expect(fn).toBeCalled();
     });
 
     test('shift_jis', async () => {
+      const fn = jest.fn();
       proxy.addResponseListener('id', ({ data }) => {
         expect(data.value).toBe('日本語テスト');
+        fn();
       });
 
       await getWithProxy('/charset/shift_jis');
+      expect(fn).toBeCalled();
     });
   });
 
   describe('binary', () => {
+    const fn = jest.fn();
     test('image/png', async () => {
       proxy.addResponseListener('id', ({ data }) => {
         expect(data.value).toEqual(Buffer.from([1, 2, 3]));
+        fn();
       });
 
       await getWithProxy('/image/png');
+      expect(fn).toBeCalled();
     });
   });
 
   describe('request', () => {
     test('application/x-www-form-urlencoded', async () => {
+      const fn = jest.fn();
       proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual({
           key: ['value', 'value2'],
           nextKey: 'nextValue',
         });
+        fn();
       });
 
       await postWithProxy('/direct/header', 'key=value&key=value2&nextKey=nextValue', {
         'Content-Type': 'application/x-www-form-urlencoded',
       });
+      expect(fn).toBeCalled();
     });
 
     test('multipart/form-data', async () => {
+      const fn = jest.fn();
       proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual([
           {
@@ -101,6 +115,7 @@ describe('Proxy', () => {
             rawHeader: 'Content-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain',
           },
         ]);
+        fn();
       });
 
       await postWithProxy(
@@ -110,9 +125,11 @@ describe('Proxy', () => {
           'Content-Type': 'multipart/form-data; boundary=boundary',
         }
       );
+      expect(fn).toBeCalled();
     });
 
     test('application/json', async () => {
+      const fn = jest.fn();
       proxy.addRequestListener('id', async ({ data }) => {
         expect(data.value).toEqual({
           key: 'value',
@@ -123,6 +140,7 @@ describe('Proxy', () => {
             nestedNumber: 51101,
           },
         });
+        fn();
       });
 
       await postWithProxy(
@@ -132,6 +150,7 @@ describe('Proxy', () => {
           'Content-Type': 'application/json',
         }
       );
+      expect(fn).toBeCalled();
     });
   });
 
@@ -158,6 +177,125 @@ describe('Proxy', () => {
       await postWithProxy();
       expect(requestListener).toBeCalledTimes(1);
       expect(responseListener).toBeCalledTimes(1);
+    });
+  });
+
+  describe('tampering', () => {
+    test('header', async () => {
+      const fn = jest.fn();
+      proxy.addRequestListener('id', async (data) => {
+        // wait 0.5s second.
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500);
+        });
+
+        data.request.headers['additional-header'] = 'additional-header';
+        return data;
+      });
+
+      proxy.addResponseListener('id', ({ data }) => {
+        expect(data.value).toContain('default-header');
+        expect(data.value).toContain('additional-header');
+        fn();
+      });
+
+      await postWithProxy('/direct/header', '', {
+        'Default-Header': 'default-header',
+      });
+      expect(fn).toBeCalled();
+    });
+
+    test('application/x-www-form-urlencoded', async () => {
+      const fn = jest.fn();
+      proxy.addRequestListener('id', async (data) => {
+        if (data.data.type !== 'urlencoded') {
+          fail();
+        }
+
+        data.data.value['additionalData'] = 'additionalValue';
+        return data;
+      });
+
+      proxy.addResponseListener('id', ({ data }) => {
+        if (data.type !== 'string') {
+          fail();
+        }
+
+        expect(data.value).toEqual(`key=value&key=value2&nextKey=nextValue&additionalData=additionalValue`);
+        fn();
+      });
+
+      await postWithProxy('/direct/body', 'key=value&key=value2&nextKey=nextValue', {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      });
+      expect(fn).toBeCalled();
+    });
+
+    test('multipart/form-data', async () => {
+      const fn = jest.fn();
+
+      proxy.addRequestListener('id', async (data) => {
+        if (data.data.type !== 'formdata') {
+          fail();
+        }
+        data.data.value.push({
+          key: 'additionalKey',
+          value: 'additionalValue',
+          filename: 'additonalFile',
+        });
+        return data;
+      });
+
+      proxy.addResponseListener('id', ({ data }) => {
+        if (data.type !== 'string') {
+          fail();
+        }
+
+        expect(data.value).toEqual(
+          `--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nWorld\r\n\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary\r\nContent-Disposition: formdata; name ="additionalKey"; filename=additonalFile\r\nContent-Type: text/plain\r\n\r\n\r\nadditionalValue\r\n--boundary--`
+        );
+        fn();
+      });
+
+      await postWithProxy(
+        '/direct/body',
+        '--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nWorld\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary--',
+        {
+          'Content-Type': 'multipart/form-data; boundary=boundary',
+        }
+      );
+      expect(fn).toBeCalled();
+    });
+
+    test('application/json', async () => {
+      const fn = jest.fn();
+      proxy.addRequestListener('id', async (data) => {
+        if (data.data.type !== 'json') {
+          fail();
+        }
+
+        (data.data.value as JsonObject)['additional'] = 'additionalValue';
+      });
+
+      proxy.addResponseListener('id', ({ data }) => {
+        if (data.type !== 'string') {
+          fail();
+        }
+
+        expect(data.value).toEqual(
+          `{"key":"value","numberKey":5110,"arrayKey":[1,2,3],"objectKey":{"nestedKey":"nestedValue","nestedNumber":51101},"additional":"additionalValue"}`
+        );
+        fn();
+      });
+
+      await postWithProxy(
+        '/direct/body',
+        '{"key": "value","numberKey": 5110,"arrayKey":[1, 2, 3],"objectKey":{"nestedKey":"nestedValue","nestedNumber":51101}}',
+        {
+          'Content-Type': 'application/json',
+        }
+      );
+      expect(fn).toBeCalled();
     });
   });
 });

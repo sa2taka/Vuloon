@@ -1,16 +1,16 @@
 /// <reference types="node" />
 import { IncomingMessage } from 'http';
-import { RequestData } from './types';
+import { RequestData, ResponseData } from './types';
 export interface RequestArgs {
     request: IncomingMessage;
     data: RequestData;
 }
 export interface ResponsArgs {
     request: IncomingMessage;
-    data: RequestData;
+    data: ResponseData;
 }
 export interface RequestListener {
-    listener: (request: RequestArgs, rawHttp: string, id: string) => RequestArgs | void;
+    listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
 }
 export interface ResponseListener {
     listener: (response: ResponsArgs, rawHttp: string, id: string) => void;

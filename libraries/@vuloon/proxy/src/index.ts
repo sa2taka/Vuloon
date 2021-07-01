@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import {
   createServer as createHttpServer,
@@ -8,22 +9,21 @@ import {
 } from 'http';
 import {
   createServer as createHttpsServer,
+  request as httpsRequest,
   Server as HttpsServer,
   ServerOptions,
-  request as httpsRequest,
 } from 'https';
+import { sync as mkdirpSync } from 'mkdirp';
 import { connect } from 'net';
 import { pki } from 'node-forge';
+import { dirname } from 'path';
 import ProxyAgent from 'proxy-agent';
 import { Duplex } from 'stream';
 import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
 import { Ca } from './ca';
 import { Semaphore } from './semaphore';
 import { textifyRequest, textifyResponse } from './textify';
-import { RequestData } from './types';
-import { sync as mkdirpSync } from 'mkdirp';
-import { dirname } from 'path';
-import { randomUUID } from 'crypto';
+import { RequestData, ResponseData } from './types';
 
 export interface RequestArgs {
   request: IncomingMessage;
@@ -32,7 +32,7 @@ export interface RequestArgs {
 
 export interface ResponsArgs {
   request: IncomingMessage;
-  data: RequestData;
+  data: ResponseData;
 }
 
 export interface RequestListener {
@@ -243,9 +243,9 @@ export class Proxy {
       let parsed = parseReuqestData(buffer, requestData.headers);
 
       const uuid = randomUUID();
-      await Promise.all(
-        Object.values(this.#requestListeners).map(async ({ listener }) => {
-          const httpText = textifyRequest(_requestData, parsed);
+      for (const { listener } of Object.values(this.#requestListeners)) {
+        const httpText = textifyRequest(_requestData, parsed);
+        try {
           const result = await listener(
             {
               request: _requestData,
@@ -259,8 +259,10 @@ export class Proxy {
             _requestData = result.request;
             parsed = result.data;
           }
-        })
-      );
+        } catch (e) {
+          //
+        }
+      }
 
       const data = encodeRequestData(parsed, _requestData.headers['content-type']);
 

@@ -5,6 +5,8 @@ export type RequestData =
   | FormRequestData
   | JsonRequetData;
 
+export type ResponseData = StringRequestData | BinaryRequestData;
+
 export interface StringRequestData {
   type: 'string';
   value: string;
@@ -34,14 +36,14 @@ export interface FormData {
   value: string | Buffer | string[];
   filename?: string;
   filenameAster?: string;
-  rawHeader: string;
+  rawHeader?: string;
 }
 
-type JsonPrimitive = boolean | number | string | null;
+export type JsonPrimitive = boolean | number | string | null;
 
-type JsonArray = JsonPrimitive[] | JsonObject[];
+export type JsonArray = JsonPrimitive[] | JsonObject[];
 
-type JsonObject = {
+export type JsonObject = {
   [key: string]: JsonPrimitive | JsonObject | JsonArray;
 };
 

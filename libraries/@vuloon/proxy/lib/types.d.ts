@@ -1,5 +1,6 @@
 /// <reference types="node" />
 export declare type RequestData = StringRequestData | BinaryRequestData | UrlEncodedRequestData | FormRequestData | JsonRequetData;
+export declare type ResponseData = StringRequestData | BinaryRequestData;
 export interface StringRequestData {
     type: 'string';
     value: string;
@@ -25,12 +26,11 @@ export interface FormData {
     value: string | Buffer | string[];
     filename?: string;
     filenameAster?: string;
-    rawHeader: string;
+    rawHeader?: string;
 }
-declare type JsonPrimitive = boolean | number | string | null;
-declare type JsonArray = JsonPrimitive[] | JsonObject[];
-declare type JsonObject = {
+export declare type JsonPrimitive = boolean | number | string | null;
+export declare type JsonArray = JsonPrimitive[] | JsonObject[];
+export declare type JsonObject = {
     [key: string]: JsonPrimitive | JsonObject | JsonArray;
 };
 export declare type Json = JsonArray | JsonObject;
-export {};
