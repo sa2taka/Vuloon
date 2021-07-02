@@ -1,8 +1,8 @@
 {
-  "name": "template",
+  "name": "@vuloon/template",
   "version": "1.0.0",
   "description": "template",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "repository": "https://github.com/sa2taka/Vuloon/libraries/template",
   "author": "sa2taka",
   "license": "MIT",
