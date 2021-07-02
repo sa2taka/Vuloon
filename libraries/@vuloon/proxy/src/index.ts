@@ -36,6 +36,10 @@ export interface ResponsArgs {
 }
 
 export interface RequestListener {
+  listener: (request: RequestArgs, rawHttp: string, id: string) => void;
+}
+
+export interface TamperingRequestListener {
   listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
 }
 
@@ -64,7 +68,9 @@ export class Proxy {
   #nextProxy?: URL;
   #server!: HttpServer;
   #sslServer!: HttpsServer;
-  #requestListeners: Record<string, Record<string, RequestListener>>;
+  #beforeTamperingRequestListeners: Record<string, Record<string, RequestListener>>;
+  #tamperingRequestListeners: Record<string, Record<string, TamperingRequestListener>>;
+  #afterTamperingRequestListeners: Record<string, Record<string, RequestListener>>;
   #responseListeners: Record<string, Record<string, ResponseListener>>;
   #options: Options;
   #connectRequests: Record<string, IncomingMessage> = {};
@@ -98,7 +104,9 @@ export class Proxy {
    * @param nextProxy next proxy url if using multiproxy
    */
   constructor(options: Options) {
-    this.#requestListeners = {};
+    this.#beforeTamperingRequestListeners = {};
+    this.#tamperingRequestListeners = {};
+    this.#afterTamperingRequestListeners = {};
     this.#responseListeners = {};
     this.#options = options;
 
@@ -217,21 +225,21 @@ export class Proxy {
    * @param id listner id for remove.
    * @param listener response listener
    */
-  addRequestListener(moduleName: string, id: string, listener: RequestListener['listener']): void {
-    if (!this.#requestListeners[moduleName]) {
-      this.#requestListeners[moduleName] = {};
+  addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void {
+    if (!this.#tamperingRequestListeners[moduleName]) {
+      this.#tamperingRequestListeners[moduleName] = {};
     }
-    this.#requestListeners[moduleName][id] = {
+    this.#tamperingRequestListeners[moduleName][id] = {
       listener,
     };
   }
 
   removeAllRequestListener(moduleName: string): void {
-    delete this.#requestListeners[moduleName];
+    delete this.#tamperingRequestListeners[moduleName];
   }
 
   removeRequestListener(moduleName: string, id: string): void {
-    delete this.#requestListeners[moduleName][id];
+    delete this.#tamperingRequestListeners[moduleName][id];
   }
 
   #onRequest(isSsl: boolean, requestData: IncomingMessage, response: ServerResponse): void {
@@ -242,7 +250,6 @@ export class Proxy {
     });
 
     requestData.on('end', async () => {
-      let _requestData = requestData;
       if (!requestData.url) {
         return;
       }
@@ -257,37 +264,20 @@ export class Proxy {
       const { host, port } = parseHost;
 
       let parsed = parseReuqestData(buffer, requestData.headers);
-
       const uuid = randomUUID();
-      for (const modulesListeners of Object.values(this.#requestListeners)) {
-        for (const { listener } of Object.values(modulesListeners)) {
-          const httpText = textifyRequest(_requestData, parsed);
-          try {
-            const result = await listener(
-              {
-                request: _requestData,
-                data: parsed,
-              },
-              httpText,
-              uuid
-            );
 
-            if (result) {
-              _requestData = result.request;
-              parsed = result.data;
-            }
-          } catch (e) {
-            //
-          }
-        }
-      }
+      this.#emitBeforeListener(requestData, parsed, uuid);
+      const result = await this.#emitTamparingListener(requestData, parsed, uuid);
+      requestData = result.requestData;
+      parsed = result.parsed;
+      this.#emitAfterListener(requestData, parsed, uuid);
 
-      const data = encodeRequestData(parsed, _requestData.headers['content-type']);
+      const data = encodeRequestData(parsed, requestData.headers['content-type']);
 
-      _requestData.headers['content-length'] = data.length.toString();
-      _requestData.headers['x-vuloon-proxy'] = 'true';
-      _requestData.headers['proxy-connection'] = 'keep-alive';
-      _requestData.headers['connection'] = 'keep-alive';
+      requestData.headers['content-length'] = data.length.toString();
+      requestData.headers['x-vuloon-proxy'] = 'true';
+      requestData.headers['proxy-connection'] = 'keep-alive';
+      requestData.headers['connection'] = 'keep-alive';
 
       const headers: Record<string, string | string[] | undefined> = {};
       for (const h in requestData.headers) {
@@ -304,7 +294,7 @@ export class Proxy {
         port: port,
         method: requestData.method,
         path: requestData.url,
-        headers: _requestData.headers,
+        headers: requestData.headers,
         agent: this.#nextProxy ? new ProxyAgent(this.#nextProxy.toString()) : undefined,
       })
         .on('error', () => response.writeHead(502).end())
@@ -331,21 +321,88 @@ export class Proxy {
 
     response.on('end', () => {
       const parsed = parse(buffer, header);
-      const httpText = textifyResponse(response, parsed);
-      Object.values(this.#responseListeners).forEach((moduleListener) => {
-        Object.values(moduleListener).forEach(({ listener }) => {
-          listener(
+      this.#emitResponseListener(response, parsed, uuid);
+    });
+  }
+
+  #emitBeforeListener(requestData: IncomingMessage, parsed: RequestData, uuid: string): void {
+    const beforeTamperingHttpText = textifyRequest(requestData, parsed);
+    Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
+      Object.values(moduleListener).forEach(({ listener }) => {
+        listener(
+          {
+            request: requestData,
+            data: parsed,
+          },
+          beforeTamperingHttpText,
+          uuid
+        );
+      });
+    });
+  }
+
+  async #emitTamparingListener(
+    requestData: IncomingMessage,
+    parsed: RequestData,
+    uuid: string
+  ): Promise<{ requestData: IncomingMessage; parsed: RequestData }> {
+    for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
+      for (const { listener } of Object.values(modulesListeners)) {
+        const httpText = textifyRequest(requestData, parsed);
+        try {
+          const result = await listener(
             {
-              request: response,
+              request: requestData,
               data: parsed,
             },
             httpText,
             uuid
           );
-        });
+
+          if (result) {
+            requestData = result.request;
+            parsed = result.data;
+          }
+        } catch (e) {
+          //
+        }
+      }
+    }
+    return { requestData, parsed };
+  }
+
+  #emitAfterListener(requestData: IncomingMessage, parsed: RequestData, uuid: string): void {
+    const afterTamperingHttpText = textifyRequest(requestData, parsed);
+    Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
+      Object.values(moduleListener).forEach(({ listener }) => {
+        listener(
+          {
+            request: requestData,
+            data: parsed,
+          },
+          afterTamperingHttpText,
+          uuid
+        );
       });
     });
   }
+
+  #emitResponseListener(response: IncomingMessage, parsed: ResponseData, uuid: string): void {
+    const httpText = textifyResponse(response, parsed);
+    Object.values(this.#responseListeners).forEach((moduleListener) => {
+      Object.values(moduleListener).forEach(({ listener }) => {
+        listener(
+          {
+            request: response,
+            data: parsed,
+          },
+          httpText,
+          uuid
+        );
+      });
+    });
+  }
+
   #onHttpsConnect(clientRequest: IncomingMessage, clientSocket: Duplex, clientHead: Buffer): void {
     clientSocket.on('error', this.#onError.bind(this, 'client_socket_error'));
 
