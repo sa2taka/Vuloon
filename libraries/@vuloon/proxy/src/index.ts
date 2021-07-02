@@ -160,7 +160,7 @@ export class Proxy {
       .on('connect', this.#onHttpsConnect.bind(this));
   }
 
-  #registerOnClose() {
+  #registerOnClose(): void {
     process.on('exit', () => {
       this.stop();
     });
@@ -463,7 +463,13 @@ export class Proxy {
     }
   }
 
-  #parseHost(request: IncomingMessage, port: number) {
+  #parseHost(
+    request: IncomingMessage,
+    port: number
+  ): {
+    host: string;
+    port: string | number;
+  } | null {
     const _parseHost = (host: string, defaultPort: number) => {
       const match = host.match(/^https?:\/\/(.*)/);
       if (match) {
