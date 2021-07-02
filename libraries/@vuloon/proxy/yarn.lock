@@ -756,8 +756,9 @@
     "@typescript-eslint/types" "4.28.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vuloon/body-parser@../body-parser/":
-  version "1.0.0"
+"@vuloon/body-parser@link:../body-parser":
+  version "0.0.0"
+  uid ""
 
 abab@^2.0.3, abab@^2.0.5:
   version "2.0.5"
