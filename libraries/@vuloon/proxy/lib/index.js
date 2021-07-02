@@ -37,6 +37,7 @@ var import_bodyParser = __toModule(require("./bodyParser"));
 var import_ca = __toModule(require("./ca"));
 var import_semaphore = __toModule(require("./semaphore"));
 var import_textify = __toModule(require("./textify"));
+__reExport(exports, __toModule(require("./types")));
 class Proxy {
   #port;
   #sslPort;

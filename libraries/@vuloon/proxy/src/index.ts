@@ -596,3 +596,5 @@ export class Proxy {
     return `${this.#options.ssl.caDir}/certs/${host}.crt`;
   }
 }
+
+export * from './types';

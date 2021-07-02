@@ -66,3 +66,4 @@ export declare class Proxy {
     removeAllRequestListener(moduleName: string): void;
     removeRequestListener(moduleName: string, id: string): void;
 }
+export * from './types';
