@@ -19,11 +19,17 @@ import { pki } from 'node-forge';
 import { dirname } from 'path';
 import ProxyAgent from 'proxy-agent';
 import { Duplex } from 'stream';
-import { encodeRequestData, parse, parseReuqestData } from './bodyParser';
+import {
+  encodeRequestData,
+  parse,
+  parseReuqestData,
+  textifyRequest,
+  textifyResponse,
+  RequestData,
+  ResponseData,
+} from '@vuloon/body-parser';
 import { Ca } from './ca';
 import { Semaphore } from './semaphore';
-import { textifyRequest, textifyResponse } from './textify';
-import { RequestData, ResponseData } from './types';
 
 export interface RequestArgs {
   request: IncomingMessage;
@@ -597,4 +603,4 @@ export class Proxy {
   }
 }
 
-export * from './types';
+export * from '@vuloon/body-parser/lib/types';

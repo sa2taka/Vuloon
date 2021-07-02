@@ -3,7 +3,7 @@ import { get as getHttps } from 'https';
 import { encode } from 'iconv-lite';
 import ProxyAgent from 'proxy-agent';
 import { Proxy } from '../src/index';
-import { JsonObject } from '../src/types';
+import { JsonObject } from '../src/index';
 
 let mockServer: Server;
 let proxy: Proxy;
