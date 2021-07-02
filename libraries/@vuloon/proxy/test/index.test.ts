@@ -33,7 +33,7 @@ afterAll(() => {
 describe('Proxy', () => {
   test('normal', async () => {
     const fn = jest.fn();
-    proxy.addResponseListener('id', ({ data }) => {
+    proxy.addResponseListener('test', 'id', ({ data }) => {
       expect(data.value).toBe('vuloon_test');
       fn();
     });
@@ -45,7 +45,7 @@ describe('Proxy', () => {
   describe('charset', () => {
     const fn = jest.fn();
     test('utf-8', async () => {
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         expect(data.value).toBe('日本語テスト');
         fn();
       });
@@ -56,7 +56,7 @@ describe('Proxy', () => {
 
     test('shift_jis', async () => {
       const fn = jest.fn();
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         expect(data.value).toBe('日本語テスト');
         fn();
       });
@@ -69,7 +69,7 @@ describe('Proxy', () => {
   describe('binary', () => {
     const fn = jest.fn();
     test('image/png', async () => {
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         expect(data.value).toEqual(Buffer.from([1, 2, 3]));
         fn();
       });
@@ -82,7 +82,7 @@ describe('Proxy', () => {
   describe('request', () => {
     test('application/x-www-form-urlencoded', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async ({ data }) => {
+      proxy.addRequestListener('test', 'id', async ({ data }) => {
         expect(data.value).toEqual({
           key: ['value', 'value2'],
           nextKey: 'nextValue',
@@ -98,7 +98,7 @@ describe('Proxy', () => {
 
     test('multipart/form-data', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async ({ data }) => {
+      proxy.addRequestListener('test', 'id', async ({ data }) => {
         expect(data.value).toEqual([
           {
             key: 'message',
@@ -130,7 +130,7 @@ describe('Proxy', () => {
 
     test('application/json', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async ({ data }) => {
+      proxy.addRequestListener('test', 'id', async ({ data }) => {
         expect(data.value).toEqual({
           key: 'value',
           numberKey: 5110,
@@ -159,8 +159,8 @@ describe('Proxy', () => {
       const requestListener = jest.fn();
       const responseListener = jest.fn();
 
-      proxy.addRequestListener('id', requestListener);
-      proxy.addResponseListener('id', responseListener);
+      proxy.addRequestListener('test', 'id', requestListener);
+      proxy.addResponseListener('test', 'id', responseListener);
 
       await getWithProxy();
       expect(requestListener).toBeCalledTimes(1);
@@ -171,8 +171,8 @@ describe('Proxy', () => {
       const requestListener = jest.fn();
       const responseListener = jest.fn();
 
-      proxy.addRequestListener('id', requestListener);
-      proxy.addResponseListener('id', responseListener);
+      proxy.addRequestListener('test', 'id', requestListener);
+      proxy.addResponseListener('test', 'id', responseListener);
 
       await postWithProxy();
       expect(requestListener).toBeCalledTimes(1);
@@ -183,7 +183,7 @@ describe('Proxy', () => {
   describe('tampering', () => {
     test('header', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async (data) => {
+      proxy.addRequestListener('test', 'id', async (data) => {
         // wait 0.5s second.
         await new Promise((resolve) => {
           setTimeout(resolve, 500);
@@ -193,7 +193,7 @@ describe('Proxy', () => {
         return data;
       });
 
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         expect(data.value).toContain('default-header');
         expect(data.value).toContain('additional-header');
         fn();
@@ -207,7 +207,7 @@ describe('Proxy', () => {
 
     test('application/x-www-form-urlencoded', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async (data) => {
+      proxy.addRequestListener('test', 'id', async (data) => {
         if (data.data.type !== 'urlencoded') {
           fail();
         }
@@ -216,7 +216,7 @@ describe('Proxy', () => {
         return data;
       });
 
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         if (data.type !== 'string') {
           fail();
         }
@@ -234,7 +234,7 @@ describe('Proxy', () => {
     test('multipart/form-data', async () => {
       const fn = jest.fn();
 
-      proxy.addRequestListener('id', async (data) => {
+      proxy.addRequestListener('test', 'id', async (data) => {
         if (data.data.type !== 'formdata') {
           fail();
         }
@@ -246,7 +246,7 @@ describe('Proxy', () => {
         return data;
       });
 
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         if (data.type !== 'string') {
           fail();
         }
@@ -269,7 +269,7 @@ describe('Proxy', () => {
 
     test('application/json', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('id', async (data) => {
+      proxy.addRequestListener('test', 'id', async (data) => {
         if (data.data.type !== 'json') {
           fail();
         }
@@ -277,7 +277,7 @@ describe('Proxy', () => {
         (data.data.value as JsonObject)['additional'] = 'additionalValue';
       });
 
-      proxy.addResponseListener('id', ({ data }) => {
+      proxy.addResponseListener('test', 'id', ({ data }) => {
         if (data.type !== 'string') {
           fail();
         }

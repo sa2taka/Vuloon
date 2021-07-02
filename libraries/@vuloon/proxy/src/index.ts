@@ -64,8 +64,8 @@ export class Proxy {
   #nextProxy?: URL;
   #server!: HttpServer;
   #sslServer!: HttpsServer;
-  #requestListeners: Record<string, RequestListener>;
-  #responseListeners: Record<string, ResponseListener>;
+  #requestListeners: Record<string, Record<string, RequestListener>>;
+  #responseListeners: Record<string, Record<string, ResponseListener>>;
   #options: Options;
   #connectRequests: Record<string, IncomingMessage> = {};
 
@@ -190,32 +190,48 @@ export class Proxy {
 
   /**
    * Add listener on proxy response.
-   * @param id listner id for remove.
+   * @param moduleName module name to register the listener
+   * @param id the listner id for remove.
    * @param listener response listener
    */
-  addResponseListener(id: string, listener: ResponseListener['listener']): void {
-    this.#responseListeners[id] = {
+  addResponseListener(moduleName: string, id: string, listener: ResponseListener['listener']): void {
+    if (!this.#responseListeners[moduleName]) {
+      this.#responseListeners[moduleName] = {};
+    }
+    this.#responseListeners[moduleName][id] = {
       listener,
     };
   }
 
-  removeResponseListener(id: string): void {
-    delete this.#responseListeners[id];
+  removeAllResponseListener(moduleName: string): void {
+    delete this.#responseListeners[moduleName];
+  }
+
+  removeResponseListener(moduleName: string, id: string): void {
+    delete this.#responseListeners[moduleName][id];
   }
 
   /**
    * Add listener on proxy request.
+   * @param moduleName module name to register the listener
    * @param id listner id for remove.
    * @param listener response listener
    */
-  addRequestListener(id: string, listener: RequestListener['listener']): void {
-    this.#requestListeners[id] = {
+  addRequestListener(moduleName: string, id: string, listener: RequestListener['listener']): void {
+    if (!this.#requestListeners[moduleName]) {
+      this.#requestListeners[moduleName] = {};
+    }
+    this.#requestListeners[moduleName][id] = {
       listener,
     };
   }
 
-  removeRequestListener(id: string): void {
-    delete this.#requestListeners[id];
+  removeAllRequestListener(moduleName: string): void {
+    delete this.#requestListeners[moduleName];
+  }
+
+  removeRequestListener(moduleName: string, id: string): void {
+    delete this.#requestListeners[moduleName][id];
   }
 
   #onRequest(isSsl: boolean, requestData: IncomingMessage, response: ServerResponse): void {
@@ -243,24 +259,26 @@ export class Proxy {
       let parsed = parseReuqestData(buffer, requestData.headers);
 
       const uuid = randomUUID();
-      for (const { listener } of Object.values(this.#requestListeners)) {
-        const httpText = textifyRequest(_requestData, parsed);
-        try {
-          const result = await listener(
-            {
-              request: _requestData,
-              data: parsed,
-            },
-            httpText,
-            uuid
-          );
+      for (const modulesListeners of Object.values(this.#requestListeners)) {
+        for (const { listener } of Object.values(modulesListeners)) {
+          const httpText = textifyRequest(_requestData, parsed);
+          try {
+            const result = await listener(
+              {
+                request: _requestData,
+                data: parsed,
+              },
+              httpText,
+              uuid
+            );
 
-          if (result) {
-            _requestData = result.request;
-            parsed = result.data;
+            if (result) {
+              _requestData = result.request;
+              parsed = result.data;
+            }
+          } catch (e) {
+            //
           }
-        } catch (e) {
-          //
         }
       }
 
@@ -314,15 +332,17 @@ export class Proxy {
     response.on('end', () => {
       const parsed = parse(buffer, header);
       const httpText = textifyResponse(response, parsed);
-      Object.values(this.#responseListeners).forEach(({ listener }) => {
-        listener(
-          {
-            request: response,
-            data: parsed,
-          },
-          httpText,
-          uuid
-        );
+      Object.values(this.#responseListeners).forEach((moduleListener) => {
+        Object.values(moduleListener).forEach(({ listener }) => {
+          listener(
+            {
+              request: response,
+              data: parsed,
+            },
+            httpText,
+            uuid
+          );
+        });
       });
     });
   }
