@@ -1,16 +1,47 @@
-import { assert } from "console";
-import { decode } from "iconv-lite";
-import { parse as parseQueryString, stringify as encodeToQueryString } from "querystring";
-import { brotliDecompressSync, unzipSync } from "zlib";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
+var __export = (target, all) => {
+  __markAsModule(target);
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __reExport = (target, module2, desc) => {
+  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
+    for (let key of __getOwnPropNames(module2))
+      if (!__hasOwnProp.call(target, key) && key !== "default")
+        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
+  }
+  return target;
+};
+var __toModule = (module2) => {
+  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
+};
+__export(exports, {
+  encodeRequestData: () => encodeRequestData,
+  parse: () => parse,
+  parseReuqestData: () => parseReuqestData,
+  textifyRequest: () => textifyRequest,
+  textifyResponse: () => textifyResponse
+});
+var import_console = __toModule(require("console"));
+var import_iconv_lite = __toModule(require("iconv-lite"));
+var import_querystring = __toModule(require("querystring"));
+var import_zlib = __toModule(require("zlib"));
+__reExport(exports, __toModule(require("./types")));
 const CONTENT_TYPES = ["x-gzip", "gzip", "compress", "deflate", "identity", "br"];
 const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
-export function parse(body, headers) {
+function parse(body, headers) {
   const encoding = headers["content-encoding"];
   const contentType = headers["content-type"];
   const decodedBody = parseEncode(body, encoding);
   return parseContent(decodedBody, contentType);
 }
-export function parseReuqestData(body, headers) {
+function parseReuqestData(body, headers) {
   const contentType = headers["content-type"]?.toLowerCase();
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
     return parseForUrlEncoded(body, headers);
@@ -23,7 +54,7 @@ export function parseReuqestData(body, headers) {
   }
   return parse(body, headers);
 }
-export function encodeRequestData(data, contentType) {
+function encodeRequestData(data, contentType) {
   if (data.type === "binary") {
     return data.value;
   }
@@ -35,7 +66,7 @@ export function encodeRequestData(data, contentType) {
   }
   if (data.type === "formdata") {
     const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
-    assert(boundary);
+    (0, import_console.assert)(boundary);
     return encodeToFormData(data.value, boundary[1]);
   }
   if (data.type === "json") {
@@ -43,7 +74,7 @@ export function encodeRequestData(data, contentType) {
   }
   return Buffer.from("");
 }
-export function textifyRequest(request, data) {
+function textifyRequest(request, data) {
   let requestPath;
   try {
     requestPath = new URL(request.url).pathname;
@@ -63,7 +94,7 @@ export function textifyRequest(request, data) {
   return `${headerText}\r
 ${dataText.toString()}`;
 }
-export function textifyResponse(request, data) {
+function textifyResponse(request, data) {
   let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r
 `;
   const headers = request.rawHeaders;
@@ -80,16 +111,16 @@ ${dataText.toString()}`;
 function parseForUrlEncoded(body, headers) {
   const parsed = parse(body, headers);
   if (parsed.type === "string") {
-    return { type: "urlencoded", value: parseQueryString(parsed.value) };
+    return { type: "urlencoded", value: (0, import_querystring.parse)(parsed.value) };
   } else {
     return parsed;
   }
 }
 function parseForFormData(body, headers) {
   const contentType = headers["content-type"];
-  assert(contentType);
+  (0, import_console.assert)(contentType);
   const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
-  assert(boundary);
+  (0, import_console.assert)(boundary);
   const divided = divideByBoundary(body, boundary[1]);
   const partData = [];
   divided.forEach((data) => {
@@ -168,7 +199,7 @@ function parseForJson(body, headers) {
   }
 }
 function encodeToUrlEncoded(data) {
-  return encodeToQueryString(data);
+  return (0, import_querystring.stringify)(data);
 }
 function encodeToFormData(data, boundary) {
   let retBuffer = Buffer.from("");
@@ -239,9 +270,9 @@ function parseEncode(body, encoding) {
     case "x-gzip":
     case "gzip":
     case "deflate":
-      return unzipSync(body);
+      return (0, import_zlib.unzipSync)(body);
     case "br":
-      return brotliDecompressSync(body);
+      return (0, import_zlib.brotliDecompressSync)(body);
     default:
       return body;
   }
@@ -258,6 +289,13 @@ function parseContent(body, contentType) {
 }
 function parseToText(body, charset) {
   const lowerCharset = charset?.toLowerCase();
-  return decode(body, lowerCharset || "utf-8");
+  return (0, import_iconv_lite.decode)(body, lowerCharset || "utf-8");
 }
-export * from "./types";
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  encodeRequestData,
+  parse,
+  parseReuqestData,
+  textifyRequest,
+  textifyResponse
+});
