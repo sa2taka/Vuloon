@@ -329,14 +329,18 @@ export class Proxy {
     const beforeTamperingHttpText = textifyRequest(requestData, parsed);
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
-        listener(
-          {
-            request: requestData,
-            data: parsed,
-          },
-          beforeTamperingHttpText,
-          uuid
-        );
+        try {
+          listener(
+            {
+              request: requestData,
+              data: parsed,
+            },
+            beforeTamperingHttpText,
+            uuid
+          );
+        } catch {
+          //
+        }
       });
     });
   }
@@ -375,14 +379,18 @@ export class Proxy {
     const afterTamperingHttpText = textifyRequest(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
-        listener(
-          {
-            request: requestData,
-            data: parsed,
-          },
-          afterTamperingHttpText,
-          uuid
-        );
+        try {
+          listener(
+            {
+              request: requestData,
+              data: parsed,
+            },
+            afterTamperingHttpText,
+            uuid
+          );
+        } catch {
+          //
+        }
       });
     });
   }

@@ -10,6 +10,9 @@ export interface ResponsArgs {
     data: ResponseData;
 }
 export interface RequestListener {
+    listener: (request: RequestArgs, rawHttp: string, id: string) => void;
+}
+export interface TamperingRequestListener {
     listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
 }
 export interface ResponseListener {
@@ -46,16 +49,20 @@ export declare class Proxy {
     stop(): void;
     /**
      * Add listener on proxy response.
-     * @param id listner id for remove.
+     * @param moduleName module name to register the listener
+     * @param id the listner id for remove.
      * @param listener response listener
      */
-    addResponseListener(id: string, listener: ResponseListener['listener']): void;
-    removeResponseListener(id: string): void;
+    addResponseListener(moduleName: string, id: string, listener: ResponseListener['listener']): void;
+    removeAllResponseListener(moduleName: string): void;
+    removeResponseListener(moduleName: string, id: string): void;
     /**
      * Add listener on proxy request.
+     * @param moduleName module name to register the listener
      * @param id listner id for remove.
      * @param listener response listener
      */
-    addRequestListener(id: string, listener: RequestListener['listener']): void;
-    removeRequestListener(id: string): void;
+    addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    removeAllRequestListener(moduleName: string): void;
+    removeRequestListener(moduleName: string, id: string): void;
 }
