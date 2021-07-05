@@ -7,7 +7,6 @@ module.exports = {
     '@storybook/addon-links',
   ],
   webpackFinal: async (config) => {
-    console.log(config.resolve);
     config.module.rules.push({
       test: /\.(ts|tsx)$/,
       use: [

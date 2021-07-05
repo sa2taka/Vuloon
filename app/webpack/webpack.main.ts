@@ -20,14 +20,7 @@ const config: Configuration = {
       },
       {
         test: /\.tsx?$/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              transpileOnly: false,
-            },
-          },
-        ],
+        use: 'ts-loader',
       },
     ],
   },
