@@ -1,4 +1,3 @@
-import { ipcRenderer } from 'electron';
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { useConfig } from './domain/repositories/config';
