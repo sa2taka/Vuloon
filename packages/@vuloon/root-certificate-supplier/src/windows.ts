@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec } from 'sudo-prompt';
 import { existsSync } from 'fs';
 
 export async function addCertToWindows(filepath: string): Promise<boolean> {
@@ -9,7 +9,7 @@ export async function addCertToWindows(filepath: string): Promise<boolean> {
   const sanitized = sanitizeForCmd(filepath);
 
   return new Promise((resolve) => {
-    exec(`certutil -addstore ROOT ${sanitized}`, { shell: 'cmd', encoding: 'buffer' }, (err, stdout) => {
+    exec(`certutil -addstore ROOT ${sanitized}`, { name: 'Vuloon' }, (err, stdout) => {
       if (err) {
         resolve(false);
       }
