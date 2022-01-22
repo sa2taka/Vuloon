@@ -35,14 +35,14 @@ async function addCertToWindows(filepath) {
   return new Promise((resolve) => {
     (0, import_child_process.exec)(`certutil -addstore ROOT ${sanitized}`, { shell: "cmd", encoding: "buffer" }, (err, stdout) => {
       if (err) {
-        return false;
+        resolve(false);
       }
       resolve(true);
     });
   });
 }
 function sanitizeForCmd(str) {
-  return `"${str.replaceAll("%", "^%")}"`;
+  return `"${str.replaceAll('\\"', '\\\\"').replaceAll('"', '\\"').replaceAll("%", "^%").replace(/\\$/, "\\\\")}"`;
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
