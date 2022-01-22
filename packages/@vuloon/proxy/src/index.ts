@@ -30,6 +30,7 @@ import {
 } from '@vuloon/body-parser';
 import { Ca } from './ca';
 import { Semaphore } from './semaphore';
+import { stringify as encodeToQueryString } from 'querystring';
 
 export interface RequestArgs {
   request: IncomingMessage;
@@ -187,7 +188,15 @@ export class Proxy {
    * Start to listen.
    */
   start(): void {
+    this.#startServer();
+    this.#startSslServer();
+  }
+
+  #startServer(): void {
     this.#server.listen(this.#port);
+  }
+
+  #startSslServer(): void {
     this.#sslServer.listen(this.#sslPort);
   }
 
@@ -195,11 +204,32 @@ export class Proxy {
    * Close proxy.
    */
   stop(): void {
+    this.#stopServer();
+    this.#stopSslServer();
+  }
+
+  #stopServer(): void {
     this.#server.close();
+  }
+
+  #stopSslServer(): void {
     this.#sslServer.close();
     Object.values(this.#sslServers).forEach((server) => {
       server.sslServer?.close();
     });
+  }
+
+  updatePort({ port, sslPort }: { port?: number; sslPort?: number }): void {
+    if (port) {
+      this.#port = port;
+      this.#stopServer();
+      this.#startServer();
+    }
+    if (sslPort) {
+      this.#sslPort = sslPort;
+      this.#stopSslServer();
+      this.#startSslServer();
+    }
   }
 
   /**
