@@ -1,5 +1,9 @@
 {
   "extends": [
     "plugin:react/recommended"
-  ]
+  ],
+  "rules": {
+    "react/prop-types": "off",
+    "@typescript-eslint/no-empty-interface": "off"
+  }
 }

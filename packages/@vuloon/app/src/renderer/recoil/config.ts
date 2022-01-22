@@ -1,5 +1,5 @@
 import { atom, selector, SetterOrUpdater, useRecoilState } from 'recoil';
-import { Config } from '.';
+import { Config } from '@/domain/entities/config';
 import { ipcRenderer } from 'electron';
 import { READ_CONFIG, WRITE_CONFIG } from '@/ipc/eventNames';
 
@@ -8,7 +8,7 @@ const configAtom = atom<Config | null>({
   default: null,
 });
 
-const configState = selector<Config>({
+export const configState = selector<Config>({
   key: 'vuloon:config',
   get: ({ get }) => {
     const atom = get(configAtom);
@@ -23,7 +23,7 @@ const configState = selector<Config>({
   },
 });
 
-export const useConfig: () => [Config, SetterOrUpdater<Config>] = () => {
+export const useConfig = (): [Config, SetterOrUpdater<Config>] => {
   const [configAtomValue, setConfigAtom] = useRecoilState(configAtom);
   if (configAtomValue) {
     return useRecoilState(configState);

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { defaultConfigFilePath } from '.';
-import { Config, defaultConfig } from './index';
+import { Config, defaultConfig } from '@/domain/entities/config';
 
 export const readConfigFile = (filePath: string = defaultConfigFilePath): Config => {
   if (!existsSync(filePath)) {
