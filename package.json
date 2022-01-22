@@ -7,7 +7,8 @@
     "packages/@vuloon/*"
   ],
   "scripts": {
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "dev": "yarn workspace @vuloon/app dev"
   },
   "devDependencies": {
     "turbo": "latest"

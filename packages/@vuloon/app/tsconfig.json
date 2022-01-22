@@ -13,8 +13,14 @@
       "DOM"
     ],
     "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   },
   "include": [
     "src"
-  ]
+  ],
 }

@@ -1,5 +1,5 @@
 {
-  "name": "vuloon",
+  "name": "@vuloon/app",
   "version": "1.0.0",
   "description": "vuloon",
   "main": "dist/main.js",
@@ -10,12 +10,16 @@
     "start": "electron .",
     "build": "webpack-cli",
     "watch": "webpack-cli --watch",
+    "dev": "run-p start watch",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "test": "jest"
   },
   "dependencies": {
+    "eslint-webpack-plugin": "^3.1.1",
     "html-webpack-plugin": "^5.3.2",
+    "@vuloon/proxy": "link:../proxy",
+    "@vuloon/root-certificate-supplier": "link:../root-certificate-supplier",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-redux": "^7.2.4",
@@ -40,12 +44,13 @@
     "electron": "^13.1.5",
     "eslint": "^7.29.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-loader": "^4.0.2",
     "eslint-plugin-react": "^7.24.0",
     "file-loader": "^6.2.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^2.3.2",
     "react-docgen-typescript-loader": "^3.7.2",
     "ts-loader": "^9.2.3",
+    "tsconfig-paths-webpack-plugin": "^3.5.2",
     "typescript": "^4.3.5",
     "webpack": "^5.42.0",
     "webpack-cli": "^4.7.2"

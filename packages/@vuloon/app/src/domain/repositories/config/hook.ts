@@ -1,7 +1,7 @@
 import { atom, selector, SetterOrUpdater, useRecoilState } from 'recoil';
-import { Config, defaultConfig } from '.';
+import { Config } from '.';
 import { ipcRenderer } from 'electron';
-import { READ_CONFIG, WRITE_CONFIG } from '../../../ipc/eventNames';
+import { READ_CONFIG, WRITE_CONFIG } from '@/ipc/eventNames';
 
 const configAtom = atom<Config | null>({
   key: 'vuloon:config:atom',

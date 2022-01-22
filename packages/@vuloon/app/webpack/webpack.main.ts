@@ -1,5 +1,6 @@
 import path from 'path';
 import { Configuration } from 'webpack';
+import ESLintPlugin from 'eslint-webpack-plugin';
 
 const config: Configuration = {
   target: 'electron-main',
@@ -12,12 +13,6 @@ const config: Configuration = {
   devtool: 'source-map',
   module: {
     rules: [
-      {
-        test: /\.tsx?$/,
-        enforce: 'pre',
-        loader: 'eslint-loader',
-        exclude: [/node_modules/],
-      },
       {
         test: /\.tsx?$/,
         use: [
@@ -33,10 +28,11 @@ const config: Configuration = {
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, '../src'),
     },
     extensions: ['.ts', '.tsx', '.js', '.json'],
   },
+  plugins: [new ESLintPlugin({})],
 };
 
 export default config;
