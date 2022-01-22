@@ -47,6 +47,10 @@ export declare class Proxy {
      * Close proxy.
      */
     stop(): void;
+    updatePort({ port, sslPort }: {
+        port?: number;
+        sslPort?: number;
+    }): void;
     /**
      * Add listener on proxy response.
      * @param moduleName module name to register the listener

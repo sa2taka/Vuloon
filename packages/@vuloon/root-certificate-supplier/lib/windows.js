@@ -24,7 +24,7 @@ var __toModule = (module2) => {
 __export(exports, {
   addCertToWindows: () => addCertToWindows
 });
-var import_child_process = __toModule(require("child_process"));
+var import_sudo_prompt = __toModule(require("sudo-prompt"));
 var import_fs = __toModule(require("fs"));
 async function addCertToWindows(filepath) {
   const exists = (0, import_fs.existsSync)(filepath);
@@ -33,7 +33,7 @@ async function addCertToWindows(filepath) {
   }
   const sanitized = sanitizeForCmd(filepath);
   return new Promise((resolve) => {
-    (0, import_child_process.exec)(`certutil -addstore ROOT ${sanitized}`, { shell: "cmd", encoding: "buffer" }, (err, stdout) => {
+    (0, import_sudo_prompt.exec)(`certutil -addstore ROOT ${sanitized}`, { name: "Vuloon" }, (err, stdout) => {
       if (err) {
         resolve(false);
       }

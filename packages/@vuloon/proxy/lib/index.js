@@ -122,15 +122,39 @@ class Proxy2 {
     });
   }
   start() {
+    this.#startServer();
+    this.#startSslServer();
+  }
+  #startServer() {
     this.#server.listen(this.#port);
+  }
+  #startSslServer() {
     this.#sslServer.listen(this.#sslPort);
   }
   stop() {
+    this.#stopServer();
+    this.#stopSslServer();
+  }
+  #stopServer() {
     this.#server.close();
+  }
+  #stopSslServer() {
     this.#sslServer.close();
     Object.values(this.#sslServers).forEach((server) => {
       server.sslServer?.close();
     });
+  }
+  updatePort({ port, sslPort }) {
+    if (port) {
+      this.#port = port;
+      this.#stopServer();
+      this.#startServer();
+    }
+    if (sslPort) {
+      this.#sslPort = sslPort;
+      this.#stopSslServer();
+      this.#startSslServer();
+    }
   }
   addResponseListener(moduleName, id, listener) {
     if (!this.#responseListeners[moduleName]) {
