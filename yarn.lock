@@ -3026,7 +3026,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-redux@^7.1.16", "@types/react-redux@^7.1.20":
+"@types/react-redux@^7.1.20":
   version "7.1.22"
   resolved "https://registry.yarnpkg.com/@types/react-redux/-/react-redux-7.1.22.tgz#0eab76a37ef477cc4b53665aeaf29cb60631b72a"
   integrity sha512-GxIA1kM7ClU73I6wg9IRTVwSO9GS+SAKZKe0Enj+82HMU6aoESFU2HNAdNi3+J53IaOHPiUfT3kSG4L828joDQ==
@@ -3066,12 +3066,12 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/redux@^3.6.0":
-  version "3.6.0"
-  resolved "https://registry.yarnpkg.com/@types/redux/-/redux-3.6.0.tgz#f1ebe1e5411518072e4fdfca5c76e16e74c1399a"
-  integrity sha1-8evh5UEVGAcuT9/KXHbhbnTBOZo=
+"@types/recoil@^0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@types/recoil/-/recoil-0.0.9.tgz#a5efceda791ee2720418e232445bb34f4f2e4be9"
+  integrity sha512-dXKcvdzQbkFCcULgxhtc/3shoCNqsspRUY1KwIUYcAzgS0qY7+IxlcjRjq+9PizFnzKrHESllkbezqCMstPmQA==
   dependencies:
-    redux "*"
+    recoil "*"
 
 "@types/relateurl@*":
   version "0.2.29"
@@ -3227,6 +3227,8 @@
 
 "@vuloon/body-parser@link:packages/@vuloon/body-parser":
   version "1.0.0"
+  dependencies:
+    iconv-lite "^0.6.3"
 
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"
@@ -7108,6 +7110,11 @@ gud@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/gud/-/gud-1.0.0.tgz#a489581b17e6a70beca9abe3ae57de7a499852c0"
   integrity sha512-zGEOVKFM5sVPPrYs7J5/hYEw2Pof8KCyOwyhG8sAF26mCAeUFAcYPu1mwB7hhpIP29zOIBaDqwuHdLp0jvZXjw==
+
+hamt_plus@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/hamt_plus/-/hamt_plus-1.0.2.tgz#e21c252968c7e33b20f6a1b094cd85787a265601"
+  integrity sha1-4hwlKWjH4zsg9qGwlM2FeHomVgE=
 
 handlebars@^4.7.7:
   version "4.7.7"
@@ -11101,7 +11108,14 @@ rechoir@^0.7.0:
   dependencies:
     resolve "^1.9.0"
 
-redux@*, redux@^4.0.0, redux@^4.1.0:
+recoil@*, recoil@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/recoil/-/recoil-0.5.2.tgz#61fecce3b4dc91127a595586cf7369e2811ba024"
+  integrity sha512-Edibzpu3dbUMLy6QRg73WL8dvMl9Xqhp+kU+f2sJtXxsaXvAlxU/GcnDE8HXPkprXrhHF2e6SZozptNvjNF5fw==
+  dependencies:
+    hamt_plus "1.0.2"
+
+redux@^4.0.0:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.2.tgz#140f35426d99bb4729af760afcf79eaaac407104"
   integrity sha512-SH8PglcebESbd/shgf6mii6EIoRM0zrQyjcuQ+ojmfxjTtE0z9Y8pa62iA/OJ58qjP6j27uyW4kUF4jl/jd6sw==
