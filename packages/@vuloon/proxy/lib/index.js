@@ -22,7 +22,7 @@ var __toModule = (module2) => {
   return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
 };
 __export(exports, {
-  Proxy: () => Proxy
+  Proxy: () => Proxy2
 });
 var import_crypto = __toModule(require("crypto"));
 var import_fs = __toModule(require("fs"));
@@ -33,12 +33,11 @@ var import_net = __toModule(require("net"));
 var import_node_forge = __toModule(require("node-forge"));
 var import_path = __toModule(require("path"));
 var import_proxy_agent = __toModule(require("proxy-agent"));
-var import_bodyParser = __toModule(require("./bodyParser"));
+var import_body_parser = __toModule(require("@vuloon/body-parser"));
 var import_ca = __toModule(require("./ca"));
 var import_semaphore = __toModule(require("./semaphore"));
-var import_textify = __toModule(require("./textify"));
-__reExport(exports, __toModule(require("./types")));
-class Proxy {
+__reExport(exports, __toModule(require("@vuloon/body-parser/lib/types")));
+class Proxy2 {
   #port;
   #sslPort;
   #nextProxy;
@@ -178,14 +177,14 @@ class Proxy {
         return;
       }
       const { host, port } = parseHost;
-      let parsed = (0, import_bodyParser.parseReuqestData)(buffer, requestData.headers);
+      let parsed = (0, import_body_parser.parseReuqestData)(buffer, requestData.headers);
       const uuid = (0, import_crypto.randomUUID)();
       this.#emitBeforeListener(requestData, parsed, uuid);
       const result = await this.#emitTamparingListener(requestData, parsed, uuid);
       requestData = result.requestData;
       parsed = result.parsed;
       this.#emitAfterListener(requestData, parsed, uuid);
-      const data = (0, import_bodyParser.encodeRequestData)(parsed, requestData.headers["content-type"]);
+      const data = (0, import_body_parser.encodeRequestData)(parsed, requestData.headers["content-type"]);
       requestData.headers["content-length"] = data.length.toString();
       requestData.headers["x-vuloon-proxy"] = "true";
       requestData.headers["proxy-connection"] = "keep-alive";
@@ -220,12 +219,12 @@ class Proxy {
       buffer = Buffer.concat([buffer, data]);
     });
     response.on("end", () => {
-      const parsed = (0, import_bodyParser.parse)(buffer, header);
+      const parsed = (0, import_body_parser.parse)(buffer, header);
       this.#emitResponseListener(response, parsed, uuid);
     });
   }
   #emitBeforeListener(requestData, parsed, uuid) {
-    const beforeTamperingHttpText = (0, import_textify.textifyRequest)(requestData, parsed);
+    const beforeTamperingHttpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -241,7 +240,7 @@ class Proxy {
   async #emitTamparingListener(requestData, parsed, uuid) {
     for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
       for (const { listener } of Object.values(modulesListeners)) {
-        const httpText = (0, import_textify.textifyRequest)(requestData, parsed);
+        const httpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
         try {
           const result = await listener({
             request: requestData,
@@ -258,7 +257,7 @@ class Proxy {
     return { requestData, parsed };
   }
   #emitAfterListener(requestData, parsed, uuid) {
-    const afterTamperingHttpText = (0, import_textify.textifyRequest)(requestData, parsed);
+    const afterTamperingHttpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -272,7 +271,7 @@ class Proxy {
     });
   }
   #emitResponseListener(response, parsed, uuid) {
-    const httpText = (0, import_textify.textifyResponse)(response, parsed);
+    const httpText = (0, import_body_parser.textifyResponse)(response, parsed);
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         listener({

@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { IncomingMessage } from 'http';
-import { RequestData, ResponseData } from './types';
+import { RequestData, ResponseData } from '@vuloon/body-parser';
 export interface RequestArgs {
     request: IncomingMessage;
     data: RequestData;
@@ -66,4 +66,4 @@ export declare class Proxy {
     removeAllRequestListener(moduleName: string): void;
     removeRequestListener(moduleName: string, id: string): void;
 }
-export * from './types';
+export * from '@vuloon/body-parser/lib/types';
