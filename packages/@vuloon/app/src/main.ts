@@ -1,4 +1,6 @@
+import { proxy } from '@/main/domain/models/proxy';
 import { app, BrowserWindow } from 'electron';
+import { join } from 'path';
 
 const index = `${__dirname}/index.html`;
 
@@ -7,7 +9,9 @@ function createWindow() {
     width: 1280,
     height: 720,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: join(__dirname, 'preload.js'),
     },
   });
 
@@ -15,3 +19,7 @@ function createWindow() {
 }
 
 app.whenReady().then(createWindow);
+app.on('window-all-closed', app.quit);
+app.on('before-quit', () => {
+  proxy.stop();
+});

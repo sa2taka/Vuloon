@@ -3,26 +3,19 @@ import { Configuration } from 'webpack';
 import ESLintPlugin from 'eslint-webpack-plugin';
 
 const config: Configuration = {
-  target: 'electron-main',
+  target: 'electron-renderer',
   mode: 'development',
-  entry: path.resolve(__dirname, '../src/main.ts'),
+  entry: path.resolve(__dirname, '../src/preload.ts'),
   output: {
     path: path.resolve(__dirname, '../dist'),
-    filename: 'main.js',
+    filename: 'preload.js',
   },
   devtool: 'source-map',
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              transpileOnly: false,
-            },
-          },
-        ],
+        use: ['ts-loader'],
       },
     ],
   },

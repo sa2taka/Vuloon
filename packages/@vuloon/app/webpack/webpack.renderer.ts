@@ -1,6 +1,7 @@
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { Configuration } from 'webpack';
+import ESLintPlugin from 'eslint-webpack-plugin';
 
 const config: Configuration = {
   target: 'electron-renderer',
@@ -35,7 +36,14 @@ const config: Configuration = {
       filename: 'index.html',
       template: './public/index.html',
     }),
+    new ESLintPlugin({}),
   ],
+  cache: {
+    type: 'filesystem',
+    buildDependencies: {
+      config: [__filename],
+    },
+  },
 };
 
 export default config;

@@ -1,6 +1,6 @@
 import { proxy } from '@/main/domain/models/proxy';
 import { ipcMain } from 'electron';
-import { START_PROXY, STOP_PROXY, GET_PROXY } from '../eventNames';
+import { START_PROXY, STOP_PROXY, GET_PROXY } from '../sendKeys';
 
 export const proxyHandler = (): void => {
   ipcMain.handle(START_PROXY, () => {

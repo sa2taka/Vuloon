@@ -1,7 +1,7 @@
 import { atom, selector, SetterOrUpdater, useRecoilState } from 'recoil';
 import { Config } from '@/main/domain/entities/config';
-import { ipcRenderer } from 'electron';
-import { READ_CONFIG, WRITE_CONFIG } from '@/ipc/eventNames';
+import { isDefaultValue } from './util';
+import { getConfig, setConfig } from '../domain/models/config';
 
 const configAtom = atom<Config | null>({
   key: 'vuloon:config:atom',
@@ -15,10 +15,12 @@ export const configState = selector<Config>({
     if (atom) {
       return atom;
     }
-    return ipcRenderer.invoke(READ_CONFIG);
+    return getConfig();
   },
   set: ({ set }, newValue) => {
-    ipcRenderer.invoke(WRITE_CONFIG);
+    if (!isDefaultValue(newValue)) {
+      setConfig(newValue);
+    }
     set(configAtom, newValue);
   },
 });

@@ -3,16 +3,16 @@ import { Proxy } from '@vuloon/proxy';
 import { atom, selector } from 'recoil';
 
 export const proxyEnableAtom = atom<boolean>({
-  key: 'proxyEnable',
+  key: 'vuloon:sproxyEnable',
   default: false,
 });
 
 export const proxyEnableState = selector<boolean>({
-  key: 'proxy',
+  key: 'vuloon:proxy',
   get: ({ get }) => {
     return get(proxyEnableAtom);
   },
-  set: async ({ get, set }, newValue) => {
+  set: ({ get, set }, newValue) => {
     const currentState = get(proxyEnableAtom);
 
     if (currentState === newValue) {
@@ -20,9 +20,9 @@ export const proxyEnableState = selector<boolean>({
     }
 
     if (newValue) {
-      await startProxy();
+      startProxy();
     } else {
-      await stopProxy();
+      stopProxy();
     }
 
     set(proxyEnableAtom, newValue);
