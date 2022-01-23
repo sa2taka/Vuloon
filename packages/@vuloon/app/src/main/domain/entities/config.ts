@@ -1,4 +1,4 @@
-import { themeKeys } from '@/domain/entities/theme';
+import { themeKeys } from '@/main/domain/entities/theme';
 
 export interface Config {
   initial: boolean;
