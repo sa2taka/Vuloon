@@ -32,10 +32,10 @@ async function addCertToWindows(filepath) {
     return false;
   }
   const sanitized = sanitizeForCmd(filepath);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     (0, import_sudo_prompt.exec)(`certutil -addstore ROOT ${sanitized}`, { name: "Vuloon" }, (err, stdout) => {
       if (err) {
-        resolve(false);
+        reject(err);
       }
       resolve(true);
     });

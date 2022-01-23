@@ -8,7 +8,7 @@ export const configHandler = (): void => {
     return getConfig();
   });
 
-  ipcMain.handle(WRITE_CONFIG, (_, newConfig: Config) => {
+  ipcMain.on(WRITE_CONFIG, (_, newConfig: Config) => {
     return setConfig(newConfig);
   });
 };

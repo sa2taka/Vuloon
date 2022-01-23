@@ -1,3 +1,3 @@
-export declare function setProxy(port: number): void;
-export declare function enableProxy(): void;
-export declare function disableProxy(): void;
+export declare function setProxy(port: number): Promise<boolean>;
+export declare function enableProxy(): Promise<boolean>;
+export declare function disableProxy(): Promise<boolean>;

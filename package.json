@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "description": "Vuloon",
   "private": true,
-  "workspaces": [
-    "packages/@vuloon/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/@vuloon/*"
+    ]
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "yarn workspace @vuloon/app dev"

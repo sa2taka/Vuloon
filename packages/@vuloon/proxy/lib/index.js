@@ -54,6 +54,9 @@ class Proxy2 {
   #ca;
   #RootKeyFilePath = "root/key.pem";
   #RootCertFilePath = "root/cert.pem";
+  get port() {
+    return this.#port;
+  }
   get rootKeyPath() {
     return `${this.#options.ssl.caDir}/${this.#RootKeyFilePath}`;
   }

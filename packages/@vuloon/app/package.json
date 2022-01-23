@@ -19,8 +19,6 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mui/material": "^5.3.0",
-    "@vuloon/proxy": "link:../proxy",
-    "@vuloon/root-certificate-supplier": "link:../root-certificate-supplier",
     "add": "^2.0.6",
     "eslint-webpack-plugin": "^3.1.1",
     "html-webpack-plugin": "^5.3.2",

@@ -29,30 +29,30 @@ __export(exports, {
 var import_sudo_prompt = __toModule(require("sudo-prompt"));
 async function setProxy(port) {
   const sanitized = sanitizeForCmd(port.toString());
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     (0, import_sudo_prompt.exec)(`reg add "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /f /v ProxyServer /t reg_sz /d "localhost:${sanitized}"`, { name: "Vuloon" }, (err, stdout) => {
       if (err) {
-        resolve(false);
+        reject(err);
       }
       resolve(true);
     });
   });
 }
 async function enableProxy() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     (0, import_sudo_prompt.exec)(`reg add "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /f /v ProxyEnable /t reg_dword /d 1`, { name: "Vuloon" }, (err, stdout) => {
       if (err) {
-        resolve(false);
+        reject(err);
       }
       resolve(true);
     });
   });
 }
 async function disableProxy() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     (0, import_sudo_prompt.exec)(`reg add "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /f /v ProxyEnable /t reg_dword /d 0`, { name: "Vuloon" }, (err, stdout) => {
       if (err) {
-        resolve(false);
+        reject(err);
       }
       resolve(true);
     });

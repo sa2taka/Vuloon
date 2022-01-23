@@ -89,6 +89,10 @@ export class Proxy {
   #RootKeyFilePath = 'root/key.pem';
   #RootCertFilePath = 'root/cert.pem';
 
+  get port(): number {
+    return this.#port;
+  }
+
   get rootKeyPath(): string {
     return `${this.#options.ssl.caDir}/${this.#RootKeyFilePath}`;
   }

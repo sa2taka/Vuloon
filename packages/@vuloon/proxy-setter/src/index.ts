@@ -1,19 +1,22 @@
 import * as windows from './windows';
 
-export function setProxy(port: number) {
+export async function setProxy(port: number): Promise<boolean> {
   if (process.platform === 'win32') {
     windows.setProxy(port);
   }
+  return false;
 }
 
-export function enableProxy() {
+export async function enableProxy(): Promise<boolean> {
   if (process.platform === 'win32') {
     windows.enableProxy();
   }
+  return false;
 }
 
-export function disableProxy() {
+export async function disableProxy(): Promise<boolean> {
   if (process.platform === 'win32') {
     windows.disableProxy();
   }
+  return false;
 }

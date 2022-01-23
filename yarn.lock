@@ -3417,26 +3417,6 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vuloon/body-parser@link:packages/@vuloon/body-parser":
-  version "1.0.0"
-  dependencies:
-    iconv-lite "^0.6.3"
-
-"@vuloon/proxy@link:packages/@vuloon/proxy":
-  version "1.0.0"
-  dependencies:
-    "@types/node-forge" "^0.10.0"
-    "@vuloon/body-parser" "link:packages/@vuloon/body-parser"
-    iconv-lite "^0.6.3"
-    mkdirp "^1.0.4"
-    node-forge "^0.10.0"
-    proxy-agent "^4.0.1"
-
-"@vuloon/root-certificate-supplier@link:packages/@vuloon/root-certificate-supplier":
-  version "1.0.0"
-  dependencies:
-    sudo-prompt "^9.2.1"
-
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.1.tgz#2bfd767eae1a6996f432ff7e8d7fc75679c0b6a7"

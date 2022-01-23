@@ -29,6 +29,7 @@ export interface Options {
 }
 export declare class Proxy {
     #private;
+    get port(): number;
     get rootKeyPath(): string;
     get rootCertPath(): string;
     get keyPath(): string;

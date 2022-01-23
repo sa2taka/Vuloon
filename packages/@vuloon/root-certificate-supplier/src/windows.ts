@@ -8,10 +8,10 @@ export async function addCertToWindows(filepath: string): Promise<boolean> {
   }
   const sanitized = sanitizeForCmd(filepath);
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     exec(`certutil -addstore ROOT ${sanitized}`, { name: 'Vuloon' }, (err, stdout) => {
       if (err) {
-        resolve(false);
+        reject(err);
       }
       resolve(true);
     });

@@ -27,20 +27,23 @@ __export(exports, {
   setProxy: () => setProxy
 });
 var windows = __toModule(require("./windows"));
-function setProxy(port) {
+async function setProxy(port) {
   if (process.platform === "win32") {
     windows.setProxy(port);
   }
+  return false;
 }
-function enableProxy() {
+async function enableProxy() {
   if (process.platform === "win32") {
     windows.enableProxy();
   }
+  return false;
 }
-function disableProxy() {
+async function disableProxy() {
   if (process.platform === "win32") {
-    windows.disableProxy();
+    window.disableProxy();
   }
+  return false;
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
