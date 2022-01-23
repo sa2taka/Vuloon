@@ -1,7 +1,4 @@
-import { readConfigHandler } from './handlers/readConfig';
-import { writeConfigHandler } from './handlers/writeConfig';
-
+import { configHandler } from './handlers/config';
 export const registerHandler = (): void => {
-  readConfigHandler();
-  writeConfigHandler();
+  configHandler();
 };
