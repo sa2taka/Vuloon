@@ -2,6 +2,7 @@ import { Layout } from '@/renderer/components/Layout';
 import { Main } from '@/renderer/components/windows/Main';
 import React from 'react';
 import ReactDom from 'react-dom';
+import { RecoilRoot } from 'recoil';
 
 const renderProps = (): [React.ReactElement<any, any>, ReactDom.Container | null] => {
   if (document.getElementById('main-app')) {
@@ -17,4 +18,9 @@ const renderProps = (): [React.ReactElement<any, any>, ReactDom.Container | null
 
 const [child, root] = renderProps();
 
-ReactDom.render(<Layout>{child}</Layout>, root);
+ReactDom.render(
+  <RecoilRoot>
+    <Layout>{child}</Layout>
+  </RecoilRoot>,
+  root
+);

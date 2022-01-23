@@ -1,3 +1,4 @@
+import { Container } from '@mui/material';
 import React from 'react';
 
 interface Props {
@@ -5,5 +6,5 @@ interface Props {
 }
 
 export const Layout: React.VFC<Props> = ({ children }) => {
-  return <>{children}</>;
+  return <Container>{children}</Container>;
 };
