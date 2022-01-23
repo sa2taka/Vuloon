@@ -1,5 +1,5 @@
 import { atom, selector, SetterOrUpdater, useRecoilState } from 'recoil';
-import { Config } from '@/domain/entities/config';
+import { Config } from '@/main/domain/entities/config';
 import { ipcRenderer } from 'electron';
 import { READ_CONFIG, WRITE_CONFIG } from '@/ipc/eventNames';
 

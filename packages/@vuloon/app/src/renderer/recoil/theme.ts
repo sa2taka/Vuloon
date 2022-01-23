@@ -1,4 +1,4 @@
-import { Theme, themes } from '@/domain/entities/theme';
+import { Theme, themes } from '@/main/domain/entities/theme';
 import { selector, useRecoilValue } from 'recoil';
 import { configState } from '@/renderer/recoil/config';
 
