@@ -21,7 +21,6 @@ function createWindow() {
 
   registerHandler();
 
-  console.log('locale:' + app.getLocale());
   const config = getConfig();
 
   if (config.initial) {

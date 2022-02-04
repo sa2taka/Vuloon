@@ -33,7 +33,7 @@ export const proxyHandler = (): void => {
 
   ipcMain.on(SET_CERTIFICATE, async () => {
     const proxy = getProxy();
-    const filePath = proxy.certPath;
+    const filePath = proxy.rootCertPath;
 
     await addCert(filePath);
   });
