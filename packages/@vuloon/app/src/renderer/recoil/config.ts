@@ -36,3 +36,8 @@ export const useConfig = (): [Config, SetterOrUpdater<Config>] => {
 
   return [config, setConfig];
 };
+
+export const useLanguage = (): string => {
+  const [config] = useConfig();
+  return config.language;
+};
