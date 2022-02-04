@@ -36,6 +36,10 @@ const config: Configuration = {
       filename: 'index.html',
       template: './public/index.html',
     }),
+    new HtmlWebpackPlugin({
+      filename: 'initial-setting.html',
+      template: './public/initial-setting.html',
+    }),
     new ESLintPlugin({}),
   ],
   cache: {
