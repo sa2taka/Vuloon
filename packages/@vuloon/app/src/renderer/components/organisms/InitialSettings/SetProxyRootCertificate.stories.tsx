@@ -3,7 +3,7 @@ import { SetProxyRootCertificate as Component } from './SetProxyRootCertificate'
 import { RecoilRoot } from 'recoil';
 
 export default {
-  title: 'organisms/InitialSettings',
+  title: 'organisms/SetProxyRootCertificate',
 };
 
 export const SetProxyRootCertificate = () => (

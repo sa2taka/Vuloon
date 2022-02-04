@@ -1,24 +1,24 @@
 import { SetProxyRootCertificateButton } from '@/renderer/components/molecules/SetProxyRootCertificateButton';
-import { Container, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useI18nTranslate } from '../../hooks/useI18n';
 
 export const SetProxyRootCertificate: React.VFC = () => {
   const t = useI18nTranslate(dict);
   return (
-    <Container>
+    <Box>
       <Typography component="h1" variant="h4">
         {t('title')}
       </Typography>
-      <Container sx={{ margin: '1em auto' }}>
+      <Box marginTop="1em" marginLeft="1em">
         <Typography>{t('first')}</Typography>
         <Typography>{t('click-button-to-install')}</Typography>
-      </Container>
+      </Box>
 
-      <Container>
+      <Box marginTop="1em" marginLeft="1em">
         <SetProxyRootCertificateButton />
-      </Container>
-    </Container>
+      </Box>
+    </Box>
   );
 };
 
