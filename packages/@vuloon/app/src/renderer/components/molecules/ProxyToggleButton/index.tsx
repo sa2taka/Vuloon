@@ -1,6 +1,6 @@
 import { FormControlLabel, Switch } from '@mui/material';
 import React, { Suspense, useCallback } from 'react';
-import { proxyEnableState } from '../../recoil/proxy';
+import { proxyEnableState } from '../../../recoil/proxy';
 import { useRecoilState } from 'recoil';
 
 interface Props {}
