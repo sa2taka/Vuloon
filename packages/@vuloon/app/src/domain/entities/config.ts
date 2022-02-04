@@ -1,4 +1,4 @@
-import { themeKeys } from '@/main/domain/entities/theme';
+import { themeKeys } from '@/domain/entities/theme';
 import { app } from 'electron';
 
 export interface Config {

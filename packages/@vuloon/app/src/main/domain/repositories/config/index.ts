@@ -1,7 +1,7 @@
 export { useConfig } from '@/renderer/recoil/config';
 import { app } from 'electron';
 import { resolve } from 'path';
-import { Config } from '@/main/domain/entities/config';
+import { Config } from '@/domain/entities/config';
 import { readConfigFile, writeConfigFile } from '@/main/domain/repositories/config/persistance';
 
 export const defaultConfigFilePath = resolve(app.getPath('userData'), 'config.json');

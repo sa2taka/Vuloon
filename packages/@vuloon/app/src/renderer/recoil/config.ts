@@ -1,5 +1,5 @@
 import { atom, selector, SetterOrUpdater, useRecoilState } from 'recoil';
-import { Config } from '@/main/domain/entities/config';
+import { Config } from '@/domain/entities/config';
 import { isDefaultValue } from './util';
 import { getConfig, setConfig } from '../domain/models/config';
 

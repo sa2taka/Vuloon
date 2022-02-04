@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import * as Keys from '@/ipc/sendKeys';
 import { Proxy } from '@vuloon/proxy';
-import { Config } from '@/main/domain/entities/config';
+import { Config } from '@/domain/entities/config';
 
 const apis = {
   [Keys.READ_CONFIG]: (): Promise<Config> => ipcRenderer.invoke(Keys.READ_CONFIG),
