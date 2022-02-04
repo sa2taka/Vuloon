@@ -26,12 +26,13 @@ export const configState = selector<Config>({
 });
 
 export const useConfig = (): [Config, SetterOrUpdater<Config>] => {
+  const [config, setConfig] = useRecoilState(configState);
   const [configAtomValue, setConfigAtom] = useRecoilState(configAtom);
+
   if (configAtomValue) {
-    return useRecoilState(configState);
+    return [config, setConfig];
   }
 
-  const [config, setConfig] = useRecoilState(configState);
   setConfigAtom(config);
 
   return [config, setConfig];

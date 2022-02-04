@@ -23,7 +23,7 @@ export const SetProxyRootCertificate: React.VFC = () => {
 };
 
 const dict = {
-  jp: {
+  ja: {
     title: 'ルート証明書のインストール',
     first: '最初に、プロキシを正常に動作させるため、証明書をインストールする必要があります。',
     'click-button-to-install': '下記のボタンをクリックしてインストールしてください。',

@@ -9,10 +9,11 @@ export interface Config {
   language: string;
 }
 
-export const defaultConfig = {
-  initial: true,
-  caDir: '',
-  proxyPort: 5110,
-  theme: 'light',
-  language: app.getLocale(),
-} as const;
+export const getDefaultConfig = () =>
+  ({
+    initial: true,
+    caDir: '',
+    proxyPort: 5110,
+    theme: 'light',
+    language: app.getLocale(),
+  } as const);

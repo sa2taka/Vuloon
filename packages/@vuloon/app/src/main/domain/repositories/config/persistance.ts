@@ -1,8 +1,9 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { defaultConfigFilePath } from '.';
-import { Config, defaultConfig } from '@/domain/entities/config';
+import { Config, getDefaultConfig } from '@/domain/entities/config';
 
 export const readConfigFile = (filePath: string = defaultConfigFilePath): Config => {
+  const defaultConfig = getDefaultConfig();
   if (!existsSync(filePath)) {
     writeConfigFile(defaultConfig, filePath);
     return defaultConfig;
@@ -10,7 +11,7 @@ export const readConfigFile = (filePath: string = defaultConfigFilePath): Config
 
   try {
     const fileContent = readFileSync(filePath).toString();
-    return JSON.parse(fileContent);
+    return { ...defaultConfig, ...JSON.parse(fileContent) };
   } catch (e) {
     return defaultConfig;
   }

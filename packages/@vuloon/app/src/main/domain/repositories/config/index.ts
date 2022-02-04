@@ -13,6 +13,7 @@ export const getConfig = (): Config => {
     return currentConfig;
   }
   currentConfig = readConfigFile();
+
   return currentConfig;
 };
 
