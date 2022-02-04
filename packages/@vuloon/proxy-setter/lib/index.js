@@ -41,7 +41,7 @@ async function enableProxy() {
 }
 async function disableProxy() {
   if (process.platform === "win32") {
-    window.disableProxy();
+    windows.disableProxy();
   }
   return false;
 }

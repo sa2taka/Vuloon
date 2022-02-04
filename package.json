@@ -13,7 +13,7 @@
     "dev": "yarn workspace @vuloon/app dev"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "1.1.2"
   },
   "turbo": {
     "baseBranch": "origin/main",
