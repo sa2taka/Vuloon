@@ -16,7 +16,7 @@ import {
 import { sync as mkdirpSync } from 'mkdirp';
 import { connect } from 'net';
 import { pki } from 'node-forge';
-import { dirname } from 'path';
+import path, { dirname } from 'path';
 import ProxyAgent from 'proxy-agent';
 import { Duplex } from 'stream';
 import {
@@ -30,7 +30,6 @@ import {
 } from '@vuloon/body-parser';
 import { Ca } from './ca';
 import { Semaphore } from './semaphore';
-import { stringify as encodeToQueryString } from 'querystring';
 
 export interface RequestArgs {
   request: IncomingMessage;
@@ -94,19 +93,19 @@ export class Proxy {
   }
 
   get rootKeyPath(): string {
-    return `${this.#options.ssl.caDir}/${this.#RootKeyFilePath}`;
+    return path.join(this.#options.ssl.caDir, this.#RootKeyFilePath);
   }
 
   get rootCertPath(): string {
-    return `${this.#options.ssl.caDir}/${this.#RootCertFilePath}`;
+    return path.join(this.#options.ssl.caDir, this.#RootCertFilePath);
   }
 
   get keyPath(): string {
-    return `${this.#options.ssl.caDir}/keys/`;
+    return path.join(this.#options.ssl.caDir, 'keys');
   }
 
   get certPath(): string {
-    return `${this.#options.ssl.caDir}/certs/`;
+    return path.join(this.#options.ssl.caDir, 'certs');
   }
 
   /**

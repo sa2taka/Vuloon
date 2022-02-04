@@ -58,16 +58,16 @@ class Proxy2 {
     return this.#port;
   }
   get rootKeyPath() {
-    return `${this.#options.ssl.caDir}/${this.#RootKeyFilePath}`;
+    return import_path.default.join(this.#options.ssl.caDir, this.#RootKeyFilePath);
   }
   get rootCertPath() {
-    return `${this.#options.ssl.caDir}/${this.#RootCertFilePath}`;
+    return import_path.default.join(this.#options.ssl.caDir, this.#RootCertFilePath);
   }
   get keyPath() {
-    return `${this.#options.ssl.caDir}/keys/`;
+    return import_path.default.join(this.#options.ssl.caDir, "keys");
   }
   get certPath() {
-    return `${this.#options.ssl.caDir}/certs/`;
+    return import_path.default.join(this.#options.ssl.caDir, "certs");
   }
   constructor(options) {
     this.#beforeTamperingRequestListeners = {};
