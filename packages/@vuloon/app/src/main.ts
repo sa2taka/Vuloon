@@ -23,7 +23,7 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', app.quit);
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
   proxy.stop();
-  disableProxy();
+  await disableProxy();
 });
