@@ -25,11 +25,11 @@ __export(exports, {
   addCert: () => addCert
 });
 var import_windows = __toModule(require("./windows"));
-function addCert(filepath) {
+const addCert = async (filepath) => {
   if (process.platform === "win32") {
-    (0, import_windows.addCertToWindows)(filepath);
+    await (0, import_windows.addCertToWindows)(filepath);
   }
-}
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   addCert

@@ -1,7 +1,7 @@
 import { addCertToWindows } from './windows';
 
-export function addCert(filepath: string) {
+export const addCert = async (filepath: string): Promise<void> => {
   if (process.platform === 'win32') {
-    addCertToWindows(filepath);
+    await addCertToWindows(filepath);
   }
-}
+};

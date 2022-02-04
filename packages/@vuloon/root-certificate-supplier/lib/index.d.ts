@@ -1,1 +1,1 @@
-export declare function addCert(filepath: string): void;
+export declare const addCert: (filepath: string) => Promise<void>;
