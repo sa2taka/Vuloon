@@ -281,6 +281,60 @@ export class Proxy {
     delete this.#tamperingRequestListeners[moduleName][id];
   }
 
+  /**
+   * Add listener on proxy request before tampering.
+   * @param moduleName module name to register the listener
+   * @param id listener id for remove.
+   * @param listener response listener
+   */
+  addBeforeTamperingRequestListener(
+    moduleName: string,
+    id: string,
+    listener: TamperingRequestListener['listener']
+  ): void {
+    if (!this.#beforeTamperingRequestListeners[moduleName]) {
+      this.#beforeTamperingRequestListeners[moduleName] = {};
+    }
+    this.#beforeTamperingRequestListeners[moduleName][id] = {
+      listener,
+    };
+  }
+
+  removeAllBeforeTamperingRequestListener(moduleName: string): void {
+    delete this.#beforeTamperingRequestListeners[moduleName];
+  }
+
+  removeBeforeTamperingRequestListener(moduleName: string, id: string): void {
+    delete this.#beforeTamperingRequestListeners[moduleName][id];
+  }
+
+  /**
+   * Add listener on proxy request after tampering.
+   * @param moduleName module name to register the listener
+   * @param id listener id for remove.
+   * @param listener response listener
+   */
+  addAfterTamperingRequestListener(
+    moduleName: string,
+    id: string,
+    listener: TamperingRequestListener['listener']
+  ): void {
+    if (!this.#afterTamperingRequestListeners[moduleName]) {
+      this.#afterTamperingRequestListeners[moduleName] = {};
+    }
+    this.#afterTamperingRequestListeners[moduleName][id] = {
+      listener,
+    };
+  }
+
+  removeAllAfterTamperingRequestListener(moduleName: string): void {
+    delete this.#afterTamperingRequestListeners[moduleName];
+  }
+
+  removeAfterTamperingRequestListener(moduleName: string, id: string): void {
+    delete this.#afterTamperingRequestListeners[moduleName][id];
+  }
+
   #onRequest(isSsl: boolean, requestData: IncomingMessage, response: ServerResponse): void {
     let buffer: Buffer = Buffer.from([]);
 

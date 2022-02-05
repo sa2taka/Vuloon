@@ -187,6 +187,34 @@ class Proxy2 {
   removeRequestListener(moduleName, id) {
     delete this.#tamperingRequestListeners[moduleName][id];
   }
+  addBeforeTamperingRequestListener(moduleName, id, listener) {
+    if (!this.#beforeTamperingRequestListeners[moduleName]) {
+      this.#beforeTamperingRequestListeners[moduleName] = {};
+    }
+    this.#beforeTamperingRequestListeners[moduleName][id] = {
+      listener
+    };
+  }
+  removeAllBeforeTamperingRequestListener(moduleName) {
+    delete this.#beforeTamperingRequestListeners[moduleName];
+  }
+  removeBeforeTamperingRequestListener(moduleName, id) {
+    delete this.#beforeTamperingRequestListeners[moduleName][id];
+  }
+  addAfterTamperingRequestListener(moduleName, id, listener) {
+    if (!this.#afterTamperingRequestListeners[moduleName]) {
+      this.#afterTamperingRequestListeners[moduleName] = {};
+    }
+    this.#afterTamperingRequestListeners[moduleName][id] = {
+      listener
+    };
+  }
+  removeAllAfterTamperingRequestListener(moduleName) {
+    delete this.#afterTamperingRequestListeners[moduleName];
+  }
+  removeAfterTamperingRequestListener(moduleName, id) {
+    delete this.#afterTamperingRequestListeners[moduleName][id];
+  }
   #onRequest(isSsl, requestData, response) {
     let buffer = Buffer.from([]);
     requestData.on("data", (data) => {

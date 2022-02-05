@@ -70,5 +70,23 @@ export declare class Proxy {
     addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
     removeAllRequestListener(moduleName: string): void;
     removeRequestListener(moduleName: string, id: string): void;
+    /**
+     * Add listener on proxy request before tampering.
+     * @param moduleName module name to register the listener
+     * @param id listener id for remove.
+     * @param listener response listener
+     */
+    addBeforeTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    removeAllBeforeTamperingRequestListener(moduleName: string): void;
+    removeBeforeTamperingRequestListener(moduleName: string, id: string): void;
+    /**
+     * Add listener on proxy request after tampering.
+     * @param moduleName module name to register the listener
+     * @param id listener id for remove.
+     * @param listener response listener
+     */
+    addAfterTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    removeAllAfterTamperingRequestListener(moduleName: string): void;
+    removeAfterTamperingRequestListener(moduleName: string, id: string): void;
 }
 export * from '@vuloon/body-parser/lib/types';
