@@ -1,32 +1,19 @@
 import { getProxy } from '@/main/domain/models/proxy';
-import { app, BrowserWindow } from 'electron';
-import { join } from 'path';
+import { app } from 'electron';
 import { disableProxy } from '@vuloon/proxy-setter';
 import { getConfig } from './main/domain/repositories/config/index';
 import { registerHandler } from '@/ipc/registerHandler';
-
-const index = `${__dirname}/index.html`;
-const initialSetting = `${__dirname}/initial-setting.html`;
+import { windowManager } from '@/main/domain/models/windowManager';
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: join(__dirname, 'preload.js'),
-    },
-  });
-
   registerHandler();
 
   const config = getConfig();
 
   if (config.initial) {
-    win.loadFile(initialSetting);
+    windowManager.openInitialPage();
   } else {
-    win.loadFile(index);
+    windowManager.openIndexPage();
   }
 }
 

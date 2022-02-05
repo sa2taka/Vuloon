@@ -3,6 +3,7 @@ import { Box, Button, Step, StepButton, Stepper, Typography } from '@mui/materia
 import { useI18nTranslate } from '../hooks/useI18n';
 import { Welcome } from '@/renderer/components/organisms/InitialSettings/Welcome';
 import { SetProxyRootCertificate } from '../organisms/InitialSettings/SetProxyRootCertificate.stories';
+import { completeInitial } from '../../domain/models/window';
 
 export const InitialSetting: React.VFC = () => {
   const [activeStep, setActiveStep] = React.useState(0);
@@ -60,7 +61,7 @@ export const InitialSetting: React.VFC = () => {
   }, [isFirstStep, activeStep, setActiveStep]);
 
   const handleComplete = useCallback(() => {
-    //
+    completeInitial();
   }, []);
 
   return (

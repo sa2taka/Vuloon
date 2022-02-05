@@ -11,6 +11,8 @@ const apis = {
   [Keys.START_PROXY]: () => ipcRenderer.send(Keys.START_PROXY),
   [Keys.STOP_PROXY]: () => ipcRenderer.send(Keys.STOP_PROXY),
   [Keys.SET_CERTIFICATE]: () => ipcRenderer.invoke(Keys.SET_CERTIFICATE),
+
+  [Keys.COMPLETE_INITIAL]: () => ipcRenderer.send(Keys.COMPLETE_INITIAL),
 };
 
 export type ElectronApi = typeof apis;
