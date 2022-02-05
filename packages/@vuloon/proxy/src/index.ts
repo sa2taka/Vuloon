@@ -22,9 +22,9 @@ import { Duplex } from 'stream';
 import {
   encodeRequestBody,
   parse,
-  parseReuqestBody,
-  textifyRequest,
-  textifyResponse,
+  parseRequestBody,
+  stringifyRequest,
+  stringifyResponse,
   RequestBody,
   ResponseBody,
 } from '@vuloon/body-parser';
@@ -109,9 +109,9 @@ export class Proxy {
   }
 
   /**
-   * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or detault port, 5110)
+   * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or default port, 5110)
    * @param port proxy port (default: 5110)
-   * @param nextProxy next proxy url if using multiproxy
+   * @param nextProxy next proxy url if using multi proxy
    */
   constructor(options: Options) {
     this.#beforeTamperingRequestListeners = {};
@@ -238,7 +238,7 @@ export class Proxy {
   /**
    * Add listener on proxy response.
    * @param moduleName module name to register the listener
-   * @param id the listner id for remove.
+   * @param id the listener id for remove.
    * @param listener response listener
    */
   addResponseListener(moduleName: string, id: string, listener: ResponseListener['listener']): void {
@@ -261,7 +261,7 @@ export class Proxy {
   /**
    * Add listener on proxy request.
    * @param moduleName module name to register the listener
-   * @param id listner id for remove.
+   * @param id listener id for remove.
    * @param listener response listener
    */
   addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void {
@@ -302,11 +302,11 @@ export class Proxy {
       }
       const { host, port } = parseHost;
 
-      let parsed = parseReuqestBody(buffer, requestData.headers);
+      let parsed = parseRequestBody(buffer, requestData.headers);
       const uuid = randomUUID();
 
       this.#emitBeforeListener(requestData, parsed, uuid);
-      const result = await this.#emitTamparingListener(requestData, parsed, uuid);
+      const result = await this.#emitTamperingListener(requestData, parsed, uuid);
       requestData = result.requestData;
       parsed = result.parsed;
       this.#emitAfterListener(requestData, parsed, uuid);
@@ -365,7 +365,7 @@ export class Proxy {
   }
 
   #emitBeforeListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string): void {
-    const beforeTamperingHttpText = textifyRequest(requestData, parsed);
+    const beforeTamperingHttpText = stringifyRequest(requestData, parsed);
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -384,14 +384,14 @@ export class Proxy {
     });
   }
 
-  async #emitTamparingListener(
+  async #emitTamperingListener(
     requestData: IncomingMessage,
     parsed: RequestBody,
     uuid: string
   ): Promise<{ requestData: IncomingMessage; parsed: RequestBody }> {
     for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
       for (const { listener } of Object.values(modulesListeners)) {
-        const httpText = textifyRequest(requestData, parsed);
+        const httpText = stringifyRequest(requestData, parsed);
         try {
           const result = await listener(
             {
@@ -415,7 +415,7 @@ export class Proxy {
   }
 
   #emitAfterListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string): void {
-    const afterTamperingHttpText = textifyRequest(requestData, parsed);
+    const afterTamperingHttpText = stringifyRequest(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -435,7 +435,7 @@ export class Proxy {
   }
 
   #emitResponseListener(response: IncomingMessage, parsed: ResponseBody, uuid: string): void {
-    const httpText = textifyResponse(response, parsed);
+    const httpText = stringifyResponse(response, parsed);
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         listener(

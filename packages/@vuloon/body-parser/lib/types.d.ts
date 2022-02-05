@@ -1,5 +1,5 @@
 /// <reference types="node" />
-export declare type RequestBody = StringRequestBody | BinaryRequestBody | UrlEncodedRequestBody | FormRequestBody | JsonRequetBody;
+export declare type RequestBody = StringRequestBody | BinaryRequestBody | UrlEncodedRequestBody | FormRequestBody | JsonRequestBody;
 export declare type ResponseBody = StringRequestBody | BinaryRequestBody;
 export interface StringRequestBody {
     type: 'string';
@@ -17,7 +17,7 @@ export interface FormRequestBody {
     type: 'formdata';
     value: FormData[];
 }
-export interface JsonRequetBody {
+export interface JsonRequestBody {
     type: 'json';
     value: Json;
 }

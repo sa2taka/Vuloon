@@ -16,7 +16,7 @@ export declare class Ca {
         value: string;
         name?: undefined;
     })[];
-    static RootExtentions: ({
+    static RootExtensions: ({
         name: string;
         cA: boolean;
         keyCertSign?: undefined;

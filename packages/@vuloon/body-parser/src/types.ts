@@ -3,7 +3,7 @@ export type RequestBody =
   | BinaryRequestBody
   | UrlEncodedRequestBody
   | FormRequestBody
-  | JsonRequetBody;
+  | JsonRequestBody;
 
 export type ResponseBody = StringRequestBody | BinaryRequestBody;
 
@@ -27,7 +27,7 @@ export interface FormRequestBody {
   value: FormData[];
 }
 
-export interface JsonRequetBody {
+export interface JsonRequestBody {
   type: 'json';
   value: Json;
 }

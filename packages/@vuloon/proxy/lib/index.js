@@ -204,10 +204,10 @@ class Proxy2 {
         return;
       }
       const { host, port } = parseHost;
-      let parsed = (0, import_body_parser.parseReuqestBody)(buffer, requestData.headers);
+      let parsed = (0, import_body_parser.parseRequestBody)(buffer, requestData.headers);
       const uuid = (0, import_crypto.randomUUID)();
       this.#emitBeforeListener(requestData, parsed, uuid);
-      const result = await this.#emitTamparingListener(requestData, parsed, uuid);
+      const result = await this.#emitTamperingListener(requestData, parsed, uuid);
       requestData = result.requestData;
       parsed = result.parsed;
       this.#emitAfterListener(requestData, parsed, uuid);
@@ -251,7 +251,7 @@ class Proxy2 {
     });
   }
   #emitBeforeListener(requestData, parsed, uuid) {
-    const beforeTamperingHttpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
+    const beforeTamperingHttpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -264,10 +264,10 @@ class Proxy2 {
       });
     });
   }
-  async #emitTamparingListener(requestData, parsed, uuid) {
+  async #emitTamperingListener(requestData, parsed, uuid) {
     for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
       for (const { listener } of Object.values(modulesListeners)) {
-        const httpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
+        const httpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
         try {
           const result = await listener({
             header: requestData,
@@ -284,7 +284,7 @@ class Proxy2 {
     return { requestData, parsed };
   }
   #emitAfterListener(requestData, parsed, uuid) {
-    const afterTamperingHttpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
+    const afterTamperingHttpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
@@ -298,7 +298,7 @@ class Proxy2 {
     });
   }
   #emitResponseListener(response, parsed, uuid) {
-    const httpText = (0, import_body_parser.textifyResponse)(response, parsed);
+    const httpText = (0, import_body_parser.stringifyResponse)(response, parsed);
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         listener({

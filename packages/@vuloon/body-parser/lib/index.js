@@ -24,9 +24,9 @@ var __toModule = (module2) => {
 __export(exports, {
   encodeRequestBody: () => encodeRequestBody,
   parse: () => parse,
-  parseReuqestBody: () => parseReuqestBody,
-  textifyRequest: () => textifyRequest,
-  textifyResponse: () => textifyResponse
+  parseRequestBody: () => parseRequestBody,
+  stringifyRequest: () => stringifyRequest,
+  stringifyResponse: () => stringifyResponse
 });
 var import_console = __toModule(require("console"));
 var import_iconv_lite = __toModule(require("iconv-lite"));
@@ -41,7 +41,7 @@ function parse(body, headers) {
   const decodedBody = parseEncode(body, encoding);
   return parseContent(decodedBody, contentType);
 }
-function parseReuqestBody(body, headers) {
+function parseRequestBody(body, headers) {
   const contentType = headers["content-type"]?.toLowerCase();
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
     return parseForUrlEncoded(body, headers);
@@ -74,7 +74,7 @@ function encodeRequestBody(body, contentType) {
   }
   return Buffer.from("");
 }
-function textifyRequest(request, data) {
+function stringifyRequest(request, data) {
   let requestPath;
   try {
     requestPath = new URL(request.url).pathname;
@@ -94,7 +94,7 @@ function textifyRequest(request, data) {
   return `${headerText}\r
 ${dataText.toString()}`;
 }
-function textifyResponse(request, data) {
+function stringifyResponse(request, data) {
   let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r
 `;
   const headers = request.rawHeaders;
@@ -295,7 +295,7 @@ function parseToText(body, charset) {
 0 && (module.exports = {
   encodeRequestBody,
   parse,
-  parseReuqestBody,
-  textifyRequest,
-  textifyResponse
+  parseRequestBody,
+  stringifyRequest,
+  stringifyResponse
 });

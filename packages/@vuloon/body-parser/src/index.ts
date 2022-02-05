@@ -8,7 +8,7 @@ import {
   FormData,
   FormRequestBody,
   Json,
-  JsonRequetBody,
+  JsonRequestBody,
   RequestBody,
   ResponseBody,
   StringRequestBody,
@@ -35,7 +35,7 @@ export function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseBody 
   return parseContent(decodedBody, contentType);
 }
 
-export function parseReuqestBody(body: Buffer, headers: IncomingHttpHeaders): RequestBody {
+export function parseRequestBody(body: Buffer, headers: IncomingHttpHeaders): RequestBody {
   const contentType = headers['content-type']?.toLowerCase();
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
     return parseForUrlEncoded(body, headers);
@@ -76,7 +76,7 @@ export function encodeRequestBody(body: RequestBody, contentType?: string): Buff
   return Buffer.from('');
 }
 
-export function textifyRequest(request: IncomingMessage, data: RequestBody): string {
+export function stringifyRequest(request: IncomingMessage, data: RequestBody): string {
   let requestPath: string | undefined;
   try {
     requestPath = new URL(request.url!).pathname;
@@ -98,7 +98,7 @@ export function textifyRequest(request: IncomingMessage, data: RequestBody): str
   return `${headerText}\r\n${dataText.toString()}`;
 }
 
-export function textifyResponse(request: IncomingMessage, data: RequestBody): string {
+export function stringifyResponse(request: IncomingMessage, data: RequestBody): string {
   let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r\n`;
   const headers = request.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
@@ -210,7 +210,7 @@ function parseFormDataPart(partData: Buffer): FormData {
 function parseForJson(
   body: Buffer,
   headers: IncomingHttpHeaders
-): JsonRequetBody | StringRequestBody | BinaryRequestBody {
+): JsonRequestBody | StringRequestBody | BinaryRequestBody {
   const parsed = parse(body, headers);
   try {
     if (parsed.type === 'string') {

@@ -85,7 +85,7 @@ export class Ca {
     },
   ];
 
-  static RootExtentions = [
+  static RootExtensions = [
     {
       name: 'basicConstraints',
       cA: true,
@@ -191,7 +191,7 @@ export class Ca {
     cert.validity.notAfter.setFullYear(cert.validity.notAfter.getFullYear() + 10);
     cert.setSubject(this.RootSubject);
     cert.setIssuer(this.RootSubject);
-    cert.setExtensions(this.RootExtentions);
+    cert.setExtensions(this.RootExtensions);
     cert.sign(keyPair.privateKey, md.sha256.create());
     return {
       privateKey: keyPair.privateKey,

@@ -35,9 +35,9 @@ export declare class Proxy {
     get keyPath(): string;
     get certPath(): string;
     /**
-     * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or detault port, 5110)
+     * Create new Proxy. Call {@link Proxy.start} to listen on specified port(or default port, 5110)
      * @param port proxy port (default: 5110)
-     * @param nextProxy next proxy url if using multiproxy
+     * @param nextProxy next proxy url if using multi proxy
      */
     constructor(options: Options);
     /**
@@ -55,7 +55,7 @@ export declare class Proxy {
     /**
      * Add listener on proxy response.
      * @param moduleName module name to register the listener
-     * @param id the listner id for remove.
+     * @param id the listener id for remove.
      * @param listener response listener
      */
     addResponseListener(moduleName: string, id: string, listener: ResponseListener['listener']): void;
@@ -64,7 +64,7 @@ export declare class Proxy {
     /**
      * Add listener on proxy request.
      * @param moduleName module name to register the listener
-     * @param id listner id for remove.
+     * @param id listener id for remove.
      * @param listener response listener
      */
     addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
