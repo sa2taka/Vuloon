@@ -1,6 +1,6 @@
 import { getProxy } from '@/main/domain/models/proxy';
 import { ipcMain } from 'electron';
-import { START_PROXY, STOP_PROXY, GET_PROXY, SET_CERTIFICATE } from '../sendKeys';
+import { START_PROXY, STOP_PROXY, SET_CERTIFICATE } from '../sendKeys';
 import { setProxy, enableProxy, disableProxy } from '@vuloon/proxy-setter';
 import { addCert } from '@vuloon/root-certificate-supplier';
 
@@ -24,11 +24,6 @@ export const proxyHandler = (): void => {
     } catch (e) {
       console.error(e);
     }
-  });
-
-  ipcMain.handle(GET_PROXY, () => {
-    const proxy = getProxy();
-    return proxy;
   });
 
   ipcMain.handle(SET_CERTIFICATE, async () => {

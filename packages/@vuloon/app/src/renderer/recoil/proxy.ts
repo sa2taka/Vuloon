@@ -1,5 +1,4 @@
-import { getProxy, startProxy, stopProxy } from '@/renderer/domain/models/proxy';
-import { Proxy } from '@vuloon/proxy';
+import { startProxy, stopProxy } from '@/renderer/domain/models/proxy';
 import { atom, selector } from 'recoil';
 
 export const proxyEnableAtom = atom<boolean>({
@@ -26,12 +25,5 @@ export const proxyEnableState = selector<boolean>({
     }
 
     set(proxyEnableAtom, newValue);
-  },
-});
-
-export const proxyState = selector<Proxy>({
-  key: 'proxy',
-  get: () => {
-    return getProxy();
   },
 });
