@@ -22,9 +22,9 @@ var __toModule = (module2) => {
   return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
 };
 __export(exports, {
-  encodeRequestData: () => encodeRequestData,
+  encodeRequestBody: () => encodeRequestBody,
   parse: () => parse,
-  parseReuqestData: () => parseReuqestData,
+  parseReuqestBody: () => parseReuqestBody,
   textifyRequest: () => textifyRequest,
   textifyResponse: () => textifyResponse
 });
@@ -41,7 +41,7 @@ function parse(body, headers) {
   const decodedBody = parseEncode(body, encoding);
   return parseContent(decodedBody, contentType);
 }
-function parseReuqestData(body, headers) {
+function parseReuqestBody(body, headers) {
   const contentType = headers["content-type"]?.toLowerCase();
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
     return parseForUrlEncoded(body, headers);
@@ -54,23 +54,23 @@ function parseReuqestData(body, headers) {
   }
   return parse(body, headers);
 }
-function encodeRequestData(data, contentType) {
-  if (data.type === "binary") {
-    return data.value;
+function encodeRequestBody(body, contentType) {
+  if (body.type === "binary") {
+    return body.value;
   }
-  if (data.type === "string") {
-    return Buffer.from(data.value);
+  if (body.type === "string") {
+    return Buffer.from(body.value);
   }
-  if (data.type === "urlencoded") {
-    return Buffer.from(encodeToUrlEncoded(data.value));
+  if (body.type === "urlencoded") {
+    return Buffer.from(encodeToUrlEncoded(body.value));
   }
-  if (data.type === "formdata") {
+  if (body.type === "formdata") {
     const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
     (0, import_console.assert)(boundary);
-    return encodeToFormData(data.value, boundary[1]);
+    return encodeToFormData(body.value, boundary[1]);
   }
-  if (data.type === "json") {
-    return Buffer.from(encodeToJson(data.value));
+  if (body.type === "json") {
+    return Buffer.from(encodeToJson(body.value));
   }
   return Buffer.from("");
 }
@@ -90,7 +90,7 @@ function textifyRequest(request, data) {
     headerText += `${key}: ${value}\r
 `;
   }
-  const dataText = encodeRequestData(data, request.headers["content-type"]);
+  const dataText = encodeRequestBody(data, request.headers["content-type"]);
   return `${headerText}\r
 ${dataText.toString()}`;
 }
@@ -104,7 +104,7 @@ function textifyResponse(request, data) {
     headerText += `${key}: ${value}\r
 `;
   }
-  const dataText = encodeRequestData(data, request.headers["content-type"]);
+  const dataText = encodeRequestBody(data, request.headers["content-type"]);
   return `${headerText}\r
 ${dataText.toString()}`;
 }
@@ -293,9 +293,9 @@ function parseToText(body, charset) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  encodeRequestData,
+  encodeRequestBody,
   parse,
-  parseReuqestData,
+  parseReuqestBody,
   textifyRequest,
   textifyResponse
 });

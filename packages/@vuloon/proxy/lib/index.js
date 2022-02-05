@@ -204,14 +204,14 @@ class Proxy2 {
         return;
       }
       const { host, port } = parseHost;
-      let parsed = (0, import_body_parser.parseReuqestData)(buffer, requestData.headers);
+      let parsed = (0, import_body_parser.parseReuqestBody)(buffer, requestData.headers);
       const uuid = (0, import_crypto.randomUUID)();
       this.#emitBeforeListener(requestData, parsed, uuid);
       const result = await this.#emitTamparingListener(requestData, parsed, uuid);
       requestData = result.requestData;
       parsed = result.parsed;
       this.#emitAfterListener(requestData, parsed, uuid);
-      const data = (0, import_body_parser.encodeRequestData)(parsed, requestData.headers["content-type"]);
+      const data = (0, import_body_parser.encodeRequestBody)(parsed, requestData.headers["content-type"]);
       requestData.headers["content-length"] = data.length.toString();
       requestData.headers["x-vuloon-proxy"] = "true";
       requestData.headers["proxy-connection"] = "keep-alive";
@@ -256,8 +256,8 @@ class Proxy2 {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
           listener({
-            request: requestData,
-            data: parsed
+            header: requestData,
+            body: parsed
           }, beforeTamperingHttpText, uuid);
         } catch {
         }
@@ -270,12 +270,12 @@ class Proxy2 {
         const httpText = (0, import_body_parser.textifyRequest)(requestData, parsed);
         try {
           const result = await listener({
-            request: requestData,
-            data: parsed
+            header: requestData,
+            body: parsed
           }, httpText, uuid);
           if (result) {
-            requestData = result.request;
-            parsed = result.data;
+            requestData = result.header;
+            parsed = result.body;
           }
         } catch (e) {
         }
@@ -289,8 +289,8 @@ class Proxy2 {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
           listener({
-            request: requestData,
-            data: parsed
+            header: requestData,
+            body: parsed
           }, afterTamperingHttpText, uuid);
         } catch {
         }
@@ -302,8 +302,8 @@ class Proxy2 {
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         listener({
-          request: response,
-          data: parsed
+          header: response,
+          body: parsed
         }, httpText, uuid);
       });
     });

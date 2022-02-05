@@ -1,33 +1,33 @@
-export type RequestData =
-  | StringRequestData
-  | BinaryRequestData
-  | UrlEncodedRequestData
-  | FormRequestData
-  | JsonRequetData;
+export type RequestBody =
+  | StringRequestBody
+  | BinaryRequestBody
+  | UrlEncodedRequestBody
+  | FormRequestBody
+  | JsonRequetBody;
 
-export type ResponseData = StringRequestData | BinaryRequestData;
+export type ResponseBody = StringRequestBody | BinaryRequestBody;
 
-export interface StringRequestData {
+export interface StringRequestBody {
   type: 'string';
   value: string;
 }
 
-export interface BinaryRequestData {
+export interface BinaryRequestBody {
   type: 'binary';
   value: Buffer;
 }
 
-export interface UrlEncodedRequestData {
+export interface UrlEncodedRequestBody {
   type: 'urlencoded';
   value: NodeJS.Dict<string | string[]>;
 }
 
-export interface FormRequestData {
+export interface FormRequestBody {
   type: 'formdata';
   value: FormData[];
 }
 
-export interface JsonRequetData {
+export interface JsonRequetBody {
   type: 'json';
   value: Json;
 }

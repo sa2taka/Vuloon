@@ -20,37 +20,37 @@ import path, { dirname } from 'path';
 import ProxyAgent from 'proxy-agent';
 import { Duplex } from 'stream';
 import {
-  encodeRequestData,
+  encodeRequestBody,
   parse,
-  parseReuqestData,
+  parseReuqestBody,
   textifyRequest,
   textifyResponse,
-  RequestData,
-  ResponseData,
+  RequestBody,
+  ResponseBody,
 } from '@vuloon/body-parser';
 import { Ca } from './ca';
 import { Semaphore } from './semaphore';
 
-export interface RequestArgs {
-  request: IncomingMessage;
-  data: RequestData;
+export interface RequestData {
+  header: IncomingMessage;
+  body: RequestBody;
 }
 
-export interface ResponseArgs {
-  request: IncomingMessage;
-  data: ResponseData;
+export interface ResponseData {
+  header: IncomingMessage;
+  body: ResponseBody;
 }
 
 export interface RequestListener {
-  listener: (request: RequestArgs, rawHttp: string, id: string) => void;
+  listener: (request: RequestData, rawHttp: string, id: string) => void;
 }
 
 export interface TamperingRequestListener {
-  listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
+  listener: (request: RequestData, rawHttp: string, id: string) => Promise<RequestData | void>;
 }
 
 export interface ResponseListener {
-  listener: (response: ResponseArgs, rawHttp: string, id: string) => void;
+  listener: (response: ResponseData, rawHttp: string, id: string) => void;
 }
 
 export interface Options {
@@ -302,7 +302,7 @@ export class Proxy {
       }
       const { host, port } = parseHost;
 
-      let parsed = parseReuqestData(buffer, requestData.headers);
+      let parsed = parseReuqestBody(buffer, requestData.headers);
       const uuid = randomUUID();
 
       this.#emitBeforeListener(requestData, parsed, uuid);
@@ -311,7 +311,7 @@ export class Proxy {
       parsed = result.parsed;
       this.#emitAfterListener(requestData, parsed, uuid);
 
-      const data = encodeRequestData(parsed, requestData.headers['content-type']);
+      const data = encodeRequestBody(parsed, requestData.headers['content-type']);
 
       requestData.headers['content-length'] = data.length.toString();
       requestData.headers['x-vuloon-proxy'] = 'true';
@@ -364,15 +364,15 @@ export class Proxy {
     });
   }
 
-  #emitBeforeListener(requestData: IncomingMessage, parsed: RequestData, uuid: string): void {
+  #emitBeforeListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string): void {
     const beforeTamperingHttpText = textifyRequest(requestData, parsed);
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
           listener(
             {
-              request: requestData,
-              data: parsed,
+              header: requestData,
+              body: parsed,
             },
             beforeTamperingHttpText,
             uuid
@@ -386,25 +386,25 @@ export class Proxy {
 
   async #emitTamparingListener(
     requestData: IncomingMessage,
-    parsed: RequestData,
+    parsed: RequestBody,
     uuid: string
-  ): Promise<{ requestData: IncomingMessage; parsed: RequestData }> {
+  ): Promise<{ requestData: IncomingMessage; parsed: RequestBody }> {
     for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
       for (const { listener } of Object.values(modulesListeners)) {
         const httpText = textifyRequest(requestData, parsed);
         try {
           const result = await listener(
             {
-              request: requestData,
-              data: parsed,
+              header: requestData,
+              body: parsed,
             },
             httpText,
             uuid
           );
 
           if (result) {
-            requestData = result.request;
-            parsed = result.data;
+            requestData = result.header;
+            parsed = result.body;
           }
         } catch (e) {
           //
@@ -414,15 +414,15 @@ export class Proxy {
     return { requestData, parsed };
   }
 
-  #emitAfterListener(requestData: IncomingMessage, parsed: RequestData, uuid: string): void {
+  #emitAfterListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string): void {
     const afterTamperingHttpText = textifyRequest(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         try {
           listener(
             {
-              request: requestData,
-              data: parsed,
+              header: requestData,
+              body: parsed,
             },
             afterTamperingHttpText,
             uuid
@@ -434,14 +434,14 @@ export class Proxy {
     });
   }
 
-  #emitResponseListener(response: IncomingMessage, parsed: ResponseData, uuid: string): void {
+  #emitResponseListener(response: IncomingMessage, parsed: ResponseBody, uuid: string): void {
     const httpText = textifyResponse(response, parsed);
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
         listener(
           {
-            request: response,
-            data: parsed,
+            header: response,
+            body: parsed,
           },
           httpText,
           uuid

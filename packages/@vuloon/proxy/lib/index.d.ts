@@ -1,22 +1,22 @@
 /// <reference types="node" />
 import { IncomingMessage } from 'http';
-import { RequestData, ResponseData } from '@vuloon/body-parser';
-export interface RequestArgs {
-    request: IncomingMessage;
-    data: RequestData;
+import { RequestBody, ResponseBody } from '@vuloon/body-parser';
+export interface RequestData {
+    header: IncomingMessage;
+    body: RequestBody;
 }
-export interface ResponseArgs {
-    request: IncomingMessage;
-    data: ResponseData;
+export interface ResponseData {
+    header: IncomingMessage;
+    body: ResponseBody;
 }
 export interface RequestListener {
-    listener: (request: RequestArgs, rawHttp: string, id: string) => void;
+    listener: (request: RequestData, rawHttp: string, id: string) => void;
 }
 export interface TamperingRequestListener {
-    listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
+    listener: (request: RequestData, rawHttp: string, id: string) => Promise<RequestData | void>;
 }
 export interface ResponseListener {
-    listener: (response: ResponseArgs, rawHttp: string, id: string) => void;
+    listener: (response: ResponseData, rawHttp: string, id: string) => void;
 }
 export interface Options {
     port?: number;

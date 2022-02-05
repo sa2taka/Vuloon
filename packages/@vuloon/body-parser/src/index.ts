@@ -4,15 +4,15 @@ import { decode } from 'iconv-lite';
 import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
 import { brotliDecompressSync, unzipSync } from 'zlib';
 import {
-  BinaryRequestData,
+  BinaryRequestBody,
   FormData,
-  FormRequestData,
+  FormRequestBody,
   Json,
-  JsonRequetData,
-  RequestData,
-  ResponseData,
-  StringRequestData,
-  UrlEncodedRequestData,
+  JsonRequetBody,
+  RequestBody,
+  ResponseBody,
+  StringRequestBody,
+  UrlEncodedRequestBody,
 } from './types';
 
 /**
@@ -27,7 +27,7 @@ const CONTENT_TYPES = ['x-gzip', 'gzip', 'compress', 'deflate', 'identity', 'br'
  */
 const BINARY_CONTENT_TYPES = [/^application\/octet-stream/, /^image\/[^\s;]+/, /'video\/[^\s;]+/, /audio\/[^\s;]+/];
 
-export function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseData {
+export function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseBody {
   const encoding = headers['content-encoding'];
   const contentType = headers['content-type'];
 
@@ -35,7 +35,7 @@ export function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseData 
   return parseContent(decodedBody, contentType);
 }
 
-export function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): RequestData {
+export function parseReuqestBody(body: Buffer, headers: IncomingHttpHeaders): RequestBody {
   const contentType = headers['content-type']?.toLowerCase();
   if (contentType?.match(/^application\/x-www-form-urlencoded/)) {
     return parseForUrlEncoded(body, headers);
@@ -51,32 +51,32 @@ export function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): Re
   return parse(body, headers);
 }
 
-export function encodeRequestData(data: RequestData, contentType?: string): Buffer {
-  if (data.type === 'binary') {
-    return data.value;
+export function encodeRequestBody(body: RequestBody, contentType?: string): Buffer {
+  if (body.type === 'binary') {
+    return body.value;
   }
-  if (data.type === 'string') {
-    return Buffer.from(data.value);
-  }
-
-  if (data.type === 'urlencoded') {
-    return Buffer.from(encodeToUrlEncoded(data.value));
+  if (body.type === 'string') {
+    return Buffer.from(body.value);
   }
 
-  if (data.type === 'formdata') {
+  if (body.type === 'urlencoded') {
+    return Buffer.from(encodeToUrlEncoded(body.value));
+  }
+
+  if (body.type === 'formdata') {
     const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
     assert(boundary);
-    return encodeToFormData(data.value, boundary![1]);
+    return encodeToFormData(body.value, boundary![1]);
   }
 
-  if (data.type === 'json') {
-    return Buffer.from(encodeToJson(data.value));
+  if (body.type === 'json') {
+    return Buffer.from(encodeToJson(body.value));
   }
 
   return Buffer.from('');
 }
 
-export function textifyRequest(request: IncomingMessage, data: RequestData): string {
+export function textifyRequest(request: IncomingMessage, data: RequestBody): string {
   let requestPath: string | undefined;
   try {
     requestPath = new URL(request.url!).pathname;
@@ -93,12 +93,12 @@ export function textifyRequest(request: IncomingMessage, data: RequestData): str
     headerText += `${key}: ${value}\r\n`;
   }
 
-  const dataText = encodeRequestData(data, request.headers['content-type']);
+  const dataText = encodeRequestBody(data, request.headers['content-type']);
 
   return `${headerText}\r\n${dataText.toString()}`;
 }
 
-export function textifyResponse(request: IncomingMessage, data: RequestData): string {
+export function textifyResponse(request: IncomingMessage, data: RequestBody): string {
   let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r\n`;
   const headers = request.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
@@ -108,12 +108,12 @@ export function textifyResponse(request: IncomingMessage, data: RequestData): st
     headerText += `${key}: ${value}\r\n`;
   }
 
-  const dataText = encodeRequestData(data, request.headers['content-type']);
+  const dataText = encodeRequestBody(data, request.headers['content-type']);
 
   return `${headerText}\r\n${dataText.toString()}`;
 }
 
-function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders): UrlEncodedRequestData | BinaryRequestData {
+function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders): UrlEncodedRequestBody | BinaryRequestBody {
   const parsed = parse(body, headers);
   if (parsed.type === 'string') {
     return { type: 'urlencoded', value: parseQueryString(parsed.value) };
@@ -122,7 +122,7 @@ function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders): UrlEnco
   }
 }
 
-function parseForFormData(body: Buffer, headers: IncomingHttpHeaders): FormRequestData {
+function parseForFormData(body: Buffer, headers: IncomingHttpHeaders): FormRequestBody {
   const contentType = headers['content-type'];
   assert(contentType);
   const boundary = contentType?.match(/boundary\s*=\s*([^\s;]+)/);
@@ -210,7 +210,7 @@ function parseFormDataPart(partData: Buffer): FormData {
 function parseForJson(
   body: Buffer,
   headers: IncomingHttpHeaders
-): JsonRequetData | StringRequestData | BinaryRequestData {
+): JsonRequetBody | StringRequestBody | BinaryRequestBody {
   const parsed = parse(body, headers);
   try {
     if (parsed.type === 'string') {
@@ -307,7 +307,7 @@ function parseEncode(body: Buffer, encoding?: string) {
   }
 }
 
-function parseContent(body: Buffer, contentType?: string): StringRequestData | BinaryRequestData {
+function parseContent(body: Buffer, contentType?: string): StringRequestBody | BinaryRequestBody {
   if (!contentType) {
     return { type: 'string', value: parseToText(body) };
   }

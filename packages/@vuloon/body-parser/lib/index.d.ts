@@ -1,9 +1,9 @@
 /// <reference types="node" />
 import { IncomingHttpHeaders, IncomingMessage } from 'http';
-import { RequestData, ResponseData } from './types';
-export declare function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseData;
-export declare function parseReuqestData(body: Buffer, headers: IncomingHttpHeaders): RequestData;
-export declare function encodeRequestData(data: RequestData, contentType?: string): Buffer;
-export declare function textifyRequest(request: IncomingMessage, data: RequestData): string;
-export declare function textifyResponse(request: IncomingMessage, data: RequestData): string;
+import { RequestBody, ResponseBody } from './types';
+export declare function parse(body: Buffer, headers: IncomingHttpHeaders): ResponseBody;
+export declare function parseReuqestBody(body: Buffer, headers: IncomingHttpHeaders): RequestBody;
+export declare function encodeRequestBody(body: RequestBody, contentType?: string): Buffer;
+export declare function textifyRequest(request: IncomingMessage, data: RequestBody): string;
+export declare function textifyResponse(request: IncomingMessage, data: RequestBody): string;
 export * from './types';
