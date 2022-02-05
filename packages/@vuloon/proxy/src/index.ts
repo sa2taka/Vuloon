@@ -36,7 +36,7 @@ export interface RequestArgs {
   data: RequestData;
 }
 
-export interface ResponsArgs {
+export interface ResponseArgs {
   request: IncomingMessage;
   data: ResponseData;
 }
@@ -50,7 +50,7 @@ export interface TamperingRequestListener {
 }
 
 export interface ResponseListener {
-  listener: (response: ResponsArgs, rawHttp: string, id: string) => void;
+  listener: (response: ResponseArgs, rawHttp: string, id: string) => void;
 }
 
 export interface Options {

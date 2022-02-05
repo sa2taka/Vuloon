@@ -5,7 +5,7 @@ export interface RequestArgs {
     request: IncomingMessage;
     data: RequestData;
 }
-export interface ResponsArgs {
+export interface ResponseArgs {
     request: IncomingMessage;
     data: ResponseData;
 }
@@ -16,7 +16,7 @@ export interface TamperingRequestListener {
     listener: (request: RequestArgs, rawHttp: string, id: string) => Promise<RequestArgs | void>;
 }
 export interface ResponseListener {
-    listener: (response: ResponsArgs, rawHttp: string, id: string) => void;
+    listener: (response: ResponseArgs, rawHttp: string, id: string) => void;
 }
 export interface Options {
     port?: number;
