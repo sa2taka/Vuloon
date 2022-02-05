@@ -6,4 +6,5 @@ export declare function parseRequestBody(body: Buffer, headers: IncomingHttpHead
 export declare function encodeRequestBody(body: RequestBody, contentType?: string): Buffer;
 export declare function stringifyRequest(request: IncomingMessage, data: RequestBody): string;
 export declare function stringifyResponse(request: IncomingMessage, data: RequestBody): string;
+export declare function isEqualRequestBody(left: RequestBody, right: RequestBody): boolean;
 export * from './types';

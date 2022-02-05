@@ -21,6 +21,7 @@ import ProxyAgent from 'proxy-agent';
 import { Duplex } from 'stream';
 import {
   encodeRequestBody,
+  isEqualRequestBody,
   parse,
   parseRequestBody,
   stringifyRequest,
@@ -43,6 +44,10 @@ export interface ResponseData {
 
 export interface RequestListener {
   listener: (request: RequestData, rawHttp: string, id: string) => void;
+}
+
+export interface AfterTamperingRequestListener {
+  listener: (request: RequestData, rawHttp: string, id: string, tampering: boolean) => void;
 }
 
 export interface TamperingRequestListener {
@@ -76,7 +81,7 @@ export class Proxy {
   #sslServer!: HttpsServer;
   #beforeTamperingRequestListeners: Record<string, Record<string, RequestListener>>;
   #tamperingRequestListeners: Record<string, Record<string, TamperingRequestListener>>;
-  #afterTamperingRequestListeners: Record<string, Record<string, RequestListener>>;
+  #afterTamperingRequestListeners: Record<string, Record<string, AfterTamperingRequestListener>>;
   #responseListeners: Record<string, Record<string, ResponseListener>>;
   #options: Options;
   #connectRequests: Record<string, IncomingMessage> = {};
@@ -361,9 +366,16 @@ export class Proxy {
 
       this.#emitBeforeListener(requestData, parsed, uuid);
       const result = await this.#emitTamperingListener(requestData, parsed, uuid);
+
+      const before = { header: requestData, body: parsed };
+
       requestData = result.requestData;
       parsed = result.parsed;
-      this.#emitAfterListener(requestData, parsed, uuid);
+
+      const after = { header: requestData, body: parsed };
+
+      const tampering = this.#isEqualHeaderAndBody(before, after);
+      this.#emitAfterListener(requestData, parsed, uuid, tampering);
 
       const data = encodeRequestBody(parsed, requestData.headers['content-type']);
 
@@ -468,7 +480,7 @@ export class Proxy {
     return { requestData, parsed };
   }
 
-  #emitAfterListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string): void {
+  #emitAfterListener(requestData: IncomingMessage, parsed: RequestBody, uuid: string, tampering: boolean): void {
     const afterTamperingHttpText = stringifyRequest(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
@@ -479,7 +491,8 @@ export class Proxy {
               body: parsed,
             },
             afterTamperingHttpText,
-            uuid
+            uuid,
+            tampering
           );
         } catch {
           //
@@ -679,6 +692,33 @@ export class Proxy {
     } else {
       return null;
     }
+  }
+
+  /**
+   * Compare request data.
+   * Only the header and body are compared.
+   * @param left RequestData
+   * @param right RequestData
+   */
+  #isEqualHeaderAndBody(left: RequestData, right: RequestData): boolean {
+    return this.#isEqualHeader(left.header.headers, right.header.headers) && isEqualRequestBody(left.body, right.body);
+  }
+
+  /**
+   * compare headers
+   */
+  #isEqualHeader(left: IncomingMessage['headers'], right: IncomingMessage['headers']): boolean {
+    const hasAll = (target: IncomingMessage['headers'], compare: IncomingMessage['headers']): boolean => {
+      return Object.entries(target).every(([name, value]) => {
+        const comparedValue = compare[name];
+        if (Array.isArray(value)) {
+          return Array.isArray(comparedValue) && value.every((v, i) => v === comparedValue[i]);
+        }
+        return value === comparedValue;
+      });
+    };
+
+    return hasAll(left, right) && hasAll(right, left);
   }
 
   #getKeyFile(host: string): string {

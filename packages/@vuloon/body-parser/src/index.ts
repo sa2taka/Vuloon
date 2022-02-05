@@ -1,6 +1,6 @@
 import { assert } from 'console';
 import { IncomingHttpHeaders, IncomingMessage } from 'http';
-import { decode } from 'iconv-lite';
+import { decode, encode } from 'iconv-lite';
 import { parse as parseQueryString, stringify as encodeToQueryString } from 'querystring';
 import { brotliDecompressSync, unzipSync } from 'zlib';
 import {
@@ -111,6 +111,12 @@ export function stringifyResponse(request: IncomingMessage, data: RequestBody): 
   const dataText = encodeRequestBody(data, request.headers['content-type']);
 
   return `${headerText}\r\n${dataText.toString()}`;
+}
+
+export function isEqualRequestBody(left: RequestBody, right: RequestBody): boolean {
+  const leftBuffer = encodeRequestBody(left);
+  const rightBuffer = encodeRequestBody(right);
+  return leftBuffer.equals(rightBuffer);
 }
 
 function parseForUrlEncoded(body: Buffer, headers: IncomingHttpHeaders): UrlEncodedRequestBody | BinaryRequestBody {

@@ -236,9 +236,12 @@ class Proxy2 {
       const uuid = (0, import_crypto.randomUUID)();
       this.#emitBeforeListener(requestData, parsed, uuid);
       const result = await this.#emitTamperingListener(requestData, parsed, uuid);
+      const before = { header: requestData, body: parsed };
       requestData = result.requestData;
       parsed = result.parsed;
-      this.#emitAfterListener(requestData, parsed, uuid);
+      const after = { header: requestData, body: parsed };
+      const tampering = this.#isEqualHeaderAndBody(before, after);
+      this.#emitAfterListener(requestData, parsed, uuid, tampering);
       const data = (0, import_body_parser.encodeRequestBody)(parsed, requestData.headers["content-type"]);
       requestData.headers["content-length"] = data.length.toString();
       requestData.headers["x-vuloon-proxy"] = "true";
@@ -311,7 +314,7 @@ class Proxy2 {
     }
     return { requestData, parsed };
   }
-  #emitAfterListener(requestData, parsed, uuid) {
+  #emitAfterListener(requestData, parsed, uuid, tampering) {
     const afterTamperingHttpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach(({ listener }) => {
@@ -319,7 +322,7 @@ class Proxy2 {
           listener({
             header: requestData,
             body: parsed
-          }, afterTamperingHttpText, uuid);
+          }, afterTamperingHttpText, uuid, tampering);
         } catch {
         }
       });
@@ -478,6 +481,21 @@ class Proxy2 {
     } else {
       return null;
     }
+  }
+  #isEqualHeaderAndBody(left, right) {
+    return this.#isEqualHeader(left.header.headers, right.header.headers) && (0, import_body_parser.isEqualRequestBody)(left.body, right.body);
+  }
+  #isEqualHeader(left, right) {
+    const hasAll = (target, compare) => {
+      return Object.entries(target).every(([name, value]) => {
+        const comparedValue = compare[name];
+        if (Array.isArray(value)) {
+          return Array.isArray(comparedValue) && value.every((v, i) => v === comparedValue[i]);
+        }
+        return value === comparedValue;
+      });
+    };
+    return hasAll(left, right) && hasAll(right, left);
   }
   #getKeyFile(host) {
     return `${this.#options.ssl.caDir}/keys/${host}.key`;

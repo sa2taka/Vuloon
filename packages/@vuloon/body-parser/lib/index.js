@@ -23,6 +23,7 @@ var __toModule = (module2) => {
 };
 __export(exports, {
   encodeRequestBody: () => encodeRequestBody,
+  isEqualRequestBody: () => isEqualRequestBody,
   parse: () => parse,
   parseRequestBody: () => parseRequestBody,
   stringifyRequest: () => stringifyRequest,
@@ -107,6 +108,11 @@ function stringifyResponse(request, data) {
   const dataText = encodeRequestBody(data, request.headers["content-type"]);
   return `${headerText}\r
 ${dataText.toString()}`;
+}
+function isEqualRequestBody(left, right) {
+  const leftBuffer = encodeRequestBody(left);
+  const rightBuffer = encodeRequestBody(right);
+  return leftBuffer.equals(rightBuffer);
 }
 function parseForUrlEncoded(body, headers) {
   const parsed = parse(body, headers);
@@ -294,6 +300,7 @@ function parseToText(body, charset) {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   encodeRequestBody,
+  isEqualRequestBody,
   parse,
   parseRequestBody,
   stringifyRequest,

@@ -12,6 +12,9 @@ export interface ResponseData {
 export interface RequestListener {
     listener: (request: RequestData, rawHttp: string, id: string) => void;
 }
+export interface AfterTamperingRequestListener {
+    listener: (request: RequestData, rawHttp: string, id: string, tampering: boolean) => void;
+}
 export interface TamperingRequestListener {
     listener: (request: RequestData, rawHttp: string, id: string) => Promise<RequestData | void>;
 }
