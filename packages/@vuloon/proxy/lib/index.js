@@ -163,9 +163,7 @@ class Proxy2 {
     if (!this.#responseListeners[moduleName]) {
       this.#responseListeners[moduleName] = {};
     }
-    this.#responseListeners[moduleName][id] = {
-      listener
-    };
+    this.#responseListeners[moduleName][id] = listener;
   }
   removeAllResponseListener(moduleName) {
     delete this.#responseListeners[moduleName];
@@ -177,9 +175,7 @@ class Proxy2 {
     if (!this.#tamperingRequestListeners[moduleName]) {
       this.#tamperingRequestListeners[moduleName] = {};
     }
-    this.#tamperingRequestListeners[moduleName][id] = {
-      listener
-    };
+    this.#tamperingRequestListeners[moduleName][id] = listener;
   }
   removeAllRequestListener(moduleName) {
     delete this.#tamperingRequestListeners[moduleName];
@@ -191,9 +187,7 @@ class Proxy2 {
     if (!this.#beforeTamperingRequestListeners[moduleName]) {
       this.#beforeTamperingRequestListeners[moduleName] = {};
     }
-    this.#beforeTamperingRequestListeners[moduleName][id] = {
-      listener
-    };
+    this.#beforeTamperingRequestListeners[moduleName][id] = listener;
   }
   removeAllBeforeTamperingRequestListener(moduleName) {
     delete this.#beforeTamperingRequestListeners[moduleName];
@@ -205,9 +199,7 @@ class Proxy2 {
     if (!this.#afterTamperingRequestListeners[moduleName]) {
       this.#afterTamperingRequestListeners[moduleName] = {};
     }
-    this.#afterTamperingRequestListeners[moduleName][id] = {
-      listener
-    };
+    this.#afterTamperingRequestListeners[moduleName][id] = listener;
   }
   removeAllAfterTamperingRequestListener(moduleName) {
     delete this.#afterTamperingRequestListeners[moduleName];
@@ -232,21 +224,27 @@ class Proxy2 {
         return;
       }
       const { host, port } = parseHost;
-      let parsed = (0, import_body_parser.parseRequestBody)(buffer, requestData.headers);
+      const body = (0, import_body_parser.parseRequestBody)(buffer, requestData.headers);
       const uuid = (0, import_crypto.randomUUID)();
-      this.#emitBeforeListener(requestData, parsed, uuid);
-      const result = await this.#emitTamperingListener(requestData, parsed, uuid);
-      const before = { header: requestData, body: parsed };
-      requestData = result.requestData;
-      parsed = result.parsed;
-      const after = { header: requestData, body: parsed };
-      const tampering = this.#isEqualHeaderAndBody(before, after);
-      this.#emitAfterListener(requestData, parsed, uuid, tampering);
-      const data = (0, import_body_parser.encodeRequestBody)(parsed, requestData.headers["content-type"]);
+      const rawHttp = (0, import_body_parser.stringifyRequest)(requestData, body);
+      const beforeRequestData = {
+        request: {
+          header: requestData,
+          body
+        },
+        rawHttp
+      };
+      this.#emitBeforeListener(uuid, beforeRequestData);
+      const tamperedData = await this.#emitTamperingListener(uuid, beforeRequestData);
+      const data = (0, import_body_parser.encodeRequestBody)(tamperedData.body, requestData.headers["content-type"]);
       requestData.headers["content-length"] = data.length.toString();
-      requestData.headers["x-vuloon-proxy"] = "true";
-      requestData.headers["proxy-connection"] = "keep-alive";
-      requestData.headers["connection"] = "keep-alive";
+      const tampering = this.#isEqualHeaderAndBody(beforeRequestData.request, tamperedData, requestData.headers["content-type"]);
+      this.#appendProxyHeader(requestData);
+      const afterRequestData = {
+        request: tamperedData,
+        rawHttp
+      };
+      this.#emitAfterListener(uuid, { ...afterRequestData, tampering });
       const headers = {};
       for (const h in requestData.headers) {
         if (!/^proxy-/i.test(h)) {
@@ -277,67 +275,74 @@ class Proxy2 {
       buffer = Buffer.concat([buffer, data]);
     });
     response.on("end", () => {
-      const parsed = (0, import_body_parser.parse)(buffer, header);
-      this.#emitResponseListener(response, parsed, uuid);
+      const body = (0, import_body_parser.parse)(buffer, header);
+      const rawHttp = (0, import_body_parser.stringifyResponse)(response, body);
+      const responseData = {
+        response: {
+          header: response,
+          body
+        },
+        rawHttp
+      };
+      this.#emitResponseListener(uuid, responseData);
     });
   }
-  #emitBeforeListener(requestData, parsed, uuid) {
-    const beforeTamperingHttpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
+  #emitBeforeListener(...[uuid, data]) {
     Object.values(this.#beforeTamperingRequestListeners).forEach((moduleListener) => {
-      Object.values(moduleListener).forEach(({ listener }) => {
+      Object.values(moduleListener).forEach((listener) => {
         try {
-          listener({
-            header: requestData,
-            body: parsed
-          }, beforeTamperingHttpText, uuid);
+          listener(uuid, data);
         } catch {
         }
       });
     });
   }
-  async #emitTamperingListener(requestData, parsed, uuid) {
+  async #emitTamperingListener(...[uuid, data]) {
+    let header = data.request.header;
+    let body = data.request.body;
     for (const modulesListeners of Object.values(this.#tamperingRequestListeners)) {
-      for (const { listener } of Object.values(modulesListeners)) {
-        const httpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
+      for (const listener of Object.values(modulesListeners)) {
+        const rawHttp = (0, import_body_parser.stringifyRequest)(header, body);
+        const takeParameter = {
+          request: {
+            header,
+            body
+          },
+          rawHttp
+        };
         try {
-          const result = await listener({
-            header: requestData,
-            body: parsed
-          }, httpText, uuid);
+          const result = await listener(uuid, takeParameter);
           if (result) {
-            requestData = result.header;
-            parsed = result.body;
+            header = result.header;
+            body = result.body;
           }
         } catch (e) {
         }
       }
     }
-    return { requestData, parsed };
+    return { header, body };
   }
-  #emitAfterListener(requestData, parsed, uuid, tampering) {
-    const afterTamperingHttpText = (0, import_body_parser.stringifyRequest)(requestData, parsed);
+  #emitAfterListener(...[uuid, data]) {
     Object.values(this.#afterTamperingRequestListeners).forEach((moduleListener) => {
-      Object.values(moduleListener).forEach(({ listener }) => {
+      Object.values(moduleListener).forEach((listener) => {
         try {
-          listener({
-            header: requestData,
-            body: parsed
-          }, afterTamperingHttpText, uuid, tampering);
+          listener(uuid, data);
         } catch {
         }
       });
     });
   }
-  #emitResponseListener(response, parsed, uuid) {
-    const httpText = (0, import_body_parser.stringifyResponse)(response, parsed);
+  #emitResponseListener(...[uuid, data]) {
     Object.values(this.#responseListeners).forEach((moduleListener) => {
-      Object.values(moduleListener).forEach(({ listener }) => {
-        listener({
-          header: response,
-          body: parsed
-        }, httpText, uuid);
+      Object.values(moduleListener).forEach((listener) => {
+        listener(uuid, data);
       });
     });
+  }
+  #appendProxyHeader(requestData) {
+    requestData.headers["x-vuloon-proxy"] = "true";
+    requestData.headers["proxy-connection"] = "keep-alive";
+    requestData.headers["connection"] = "keep-alive";
   }
   #onHttpsConnect(clientRequest, clientSocket, clientHead) {
     clientSocket.on("error", this.#onError.bind(this, "client_socket_error"));
@@ -482,8 +487,8 @@ class Proxy2 {
       return null;
     }
   }
-  #isEqualHeaderAndBody(left, right) {
-    return this.#isEqualHeader(left.header.headers, right.header.headers) && (0, import_body_parser.isEqualRequestBody)(left.body, right.body);
+  #isEqualHeaderAndBody(left, right, contentType) {
+    return this.#isEqualHeader(left.header.headers, right.header.headers) && (0, import_body_parser.isEqualRequestBody)(left.body, right.body, contentType);
   }
   #isEqualHeader(left, right) {
     const hasAll = (target, compare) => {

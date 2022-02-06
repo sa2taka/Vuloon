@@ -9,18 +9,23 @@ export interface ResponseData {
     header: IncomingMessage;
     body: ResponseBody;
 }
-export interface RequestListener {
-    listener: (request: RequestData, rawHttp: string, id: string) => void;
-}
-export interface AfterTamperingRequestListener {
-    listener: (request: RequestData, rawHttp: string, id: string, tampering: boolean) => void;
-}
-export interface TamperingRequestListener {
-    listener: (request: RequestData, rawHttp: string, id: string) => Promise<RequestData | void>;
-}
-export interface ResponseListener {
-    listener: (response: ResponseData, rawHttp: string, id: string) => void;
-}
+export declare type RequestListener = (id: string, data: {
+    request: RequestData;
+    rawHttp: string;
+}) => void;
+export declare type AfterTamperingRequestListener = (id: string, data: {
+    request: RequestData;
+    rawHttp: string;
+    tampering: boolean;
+}) => void;
+export declare type TamperingRequestListener = (id: string, data: {
+    request: RequestData;
+    rawHttp: string;
+}) => Promise<RequestData | void>;
+export declare type ResponseListener = (id: string, data: {
+    response: ResponseData;
+    rawHttp: string;
+}) => void;
 export interface Options {
     port?: number;
     nextProxy?: string;
@@ -61,7 +66,7 @@ export declare class Proxy {
      * @param id the listener id for remove.
      * @param listener response listener
      */
-    addResponseListener(moduleName: string, id: string, listener: ResponseListener['listener']): void;
+    addResponseListener(moduleName: string, id: string, listener: ResponseListener): void;
     removeAllResponseListener(moduleName: string): void;
     removeResponseListener(moduleName: string, id: string): void;
     /**
@@ -70,7 +75,7 @@ export declare class Proxy {
      * @param id listener id for remove.
      * @param listener response listener
      */
-    addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    addRequestListener(moduleName: string, id: string, listener: TamperingRequestListener): void;
     removeAllRequestListener(moduleName: string): void;
     removeRequestListener(moduleName: string, id: string): void;
     /**
@@ -79,7 +84,7 @@ export declare class Proxy {
      * @param id listener id for remove.
      * @param listener response listener
      */
-    addBeforeTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    addBeforeTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener): void;
     removeAllBeforeTamperingRequestListener(moduleName: string): void;
     removeBeforeTamperingRequestListener(moduleName: string, id: string): void;
     /**
@@ -88,7 +93,7 @@ export declare class Proxy {
      * @param id listener id for remove.
      * @param listener response listener
      */
-    addAfterTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener['listener']): void;
+    addAfterTamperingRequestListener(moduleName: string, id: string, listener: TamperingRequestListener): void;
     removeAllAfterTamperingRequestListener(moduleName: string): void;
     removeAfterTamperingRequestListener(moduleName: string, id: string): void;
 }

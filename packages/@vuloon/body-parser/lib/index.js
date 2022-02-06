@@ -75,43 +75,43 @@ function encodeRequestBody(body, contentType) {
   }
   return Buffer.from("");
 }
-function stringifyRequest(request, data) {
+function stringifyRequest(header, body) {
   let requestPath;
   try {
-    requestPath = new URL(request.url).pathname;
+    requestPath = new URL(header.url).pathname;
   } catch (e) {
-    requestPath = request.url;
+    requestPath = header.url;
   }
-  let headerText = `${request.method} ${requestPath} HTTP/${request.httpVersion}\r
+  let headerText = `${header.method} ${requestPath} HTTP/${header.httpVersion}\r
 `;
-  const headers = request.rawHeaders;
+  const headers = header.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
     const key = headers[i];
     const value = headers[i + 1];
     headerText += `${key}: ${value}\r
 `;
   }
-  const dataText = encodeRequestBody(data, request.headers["content-type"]);
+  const dataText = encodeRequestBody(body, header.headers["content-type"]);
   return `${headerText}\r
 ${dataText.toString()}`;
 }
-function stringifyResponse(request, data) {
-  let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r
+function stringifyResponse(header, body) {
+  let headerText = `HTTP/${header.httpVersion} ${header.statusCode} ${header.statusMessage}\r
 `;
-  const headers = request.rawHeaders;
+  const headers = header.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
     const key = headers[i];
     const value = headers[i + 1];
     headerText += `${key}: ${value}\r
 `;
   }
-  const dataText = encodeRequestBody(data, request.headers["content-type"]);
+  const dataText = encodeRequestBody(body, header.headers["content-type"]);
   return `${headerText}\r
 ${dataText.toString()}`;
 }
-function isEqualRequestBody(left, right) {
-  const leftBuffer = encodeRequestBody(left);
-  const rightBuffer = encodeRequestBody(right);
+function isEqualRequestBody(left, right, contentType) {
+  const leftBuffer = encodeRequestBody(left, contentType);
+  const rightBuffer = encodeRequestBody(right, contentType);
   return leftBuffer.equals(rightBuffer);
 }
 function parseForUrlEncoded(body, headers) {

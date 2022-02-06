@@ -33,8 +33,8 @@ afterAll(() => {
 describe('Proxy', () => {
   test('normal', async () => {
     const fn = jest.fn();
-    proxy.addResponseListener('test', 'id', ({ body: data }) => {
-      expect(data.value).toBe('vuloon_test');
+    proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+      expect(response.body.value).toBe('vuloon_test');
       fn();
     });
 
@@ -45,8 +45,8 @@ describe('Proxy', () => {
   describe('charset', () => {
     const fn = jest.fn();
     test('utf-8', async () => {
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        expect(data.value).toBe('日本語テスト');
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        expect(response.body.value).toBe('日本語テスト');
         fn();
       });
 
@@ -56,8 +56,8 @@ describe('Proxy', () => {
 
     test('shift_jis', async () => {
       const fn = jest.fn();
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        expect(data.value).toBe('日本語テスト');
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        expect(response.body.value).toBe('日本語テスト');
         fn();
       });
 
@@ -69,8 +69,8 @@ describe('Proxy', () => {
   describe('binary', () => {
     const fn = jest.fn();
     test('image/png', async () => {
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        expect(data.value).toEqual(Buffer.from([1, 2, 3]));
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        expect(response.body.value).toEqual(Buffer.from([1, 2, 3]));
         fn();
       });
 
@@ -82,8 +82,8 @@ describe('Proxy', () => {
   describe('request', () => {
     test('application/x-www-form-urlencoded', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async ({ body: data }) => {
-        expect(data.value).toEqual({
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        expect(request.body.value).toEqual({
           key: ['value', 'value2'],
           nextKey: 'nextValue',
         });
@@ -98,8 +98,8 @@ describe('Proxy', () => {
 
     test('multipart/form-data', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async ({ body: data }) => {
-        expect(data.value).toEqual([
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        expect(request.body.value).toEqual([
           {
             key: 'message',
             value: ['Hello', 'World'],
@@ -130,8 +130,8 @@ describe('Proxy', () => {
 
     test('application/json', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async ({ body: data }) => {
-        expect(data.value).toEqual({
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        expect(request.body.value).toEqual({
           key: 'value',
           numberKey: 5110,
           arrayKey: [1, 2, 3],
@@ -183,19 +183,19 @@ describe('Proxy', () => {
   describe('tampering', () => {
     test('header', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async (data) => {
+      proxy.addRequestListener('test', 'id', async (uuid, { request }) => {
         // wait 0.5s second.
         await new Promise((resolve) => {
           setTimeout(resolve, 500);
         });
 
-        data.header.headers['additional-header'] = 'additional-header';
-        return data;
+        request.header.headers['additional-header'] = 'additional-header';
+        return request;
       });
 
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        expect(data.value).toContain('default-header');
-        expect(data.value).toContain('additional-header');
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        expect(response.body.value).toContain('default-header');
+        expect(response.body.value).toContain('additional-header');
         fn();
       });
 
@@ -207,21 +207,21 @@ describe('Proxy', () => {
 
     test('application/x-www-form-urlencoded', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async (data) => {
-        if (data.body.type !== 'urlencoded') {
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        if (request.body.type !== 'urlencoded') {
           fail();
         }
 
-        data.body.value['additionalData'] = 'additionalValue';
-        return data;
+        request.body.value['additionalData'] = 'additionalValue';
+        return request;
       });
 
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        if (data.type !== 'string') {
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        if (response.body.type !== 'string') {
           fail();
         }
 
-        expect(data.value).toEqual(`key=value&key=value2&nextKey=nextValue&additionalData=additionalValue`);
+        expect(response.body.value).toEqual(`key=value&key=value2&nextKey=nextValue&additionalData=additionalValue`);
         fn();
       });
 
@@ -234,24 +234,24 @@ describe('Proxy', () => {
     test('multipart/form-data', async () => {
       const fn = jest.fn();
 
-      proxy.addRequestListener('test', 'id', async (data) => {
-        if (data.body.type !== 'formdata') {
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        if (request.body.type !== 'formdata') {
           fail();
         }
-        data.body.value.push({
+        request.body.value.push({
           key: 'additionalKey',
           value: 'additionalValue',
           filename: 'additonalFile',
         });
-        return data;
+        return request;
       });
 
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        if (data.type !== 'string') {
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        if (response.body.type !== 'string') {
           fail();
         }
 
-        expect(data.value).toEqual(
+        expect(response.body.value).toEqual(
           `--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nHello\r\n--boundary\r\nContent-Disposition: form-data; name="message"\r\n\r\nWorld\r\n\r\n--boundary\r\nContent-Disposition: form-data; name="file"; filename="a.txt";\r\nContent-Type: text/plain\r\n\r\naaa\r\n--boundary\r\nContent-Disposition: formdata; name ="additionalKey"; filename=additonalFile\r\nContent-Type: text/plain\r\n\r\n\r\nadditionalValue\r\n--boundary--`
         );
         fn();
@@ -269,20 +269,20 @@ describe('Proxy', () => {
 
     test('application/json', async () => {
       const fn = jest.fn();
-      proxy.addRequestListener('test', 'id', async (data) => {
-        if (data.body.type !== 'json') {
+      proxy.addRequestListener('test', 'id', async (_uuid, { request }) => {
+        if (request.body.type !== 'json') {
           fail();
         }
 
-        (data.body.value as JsonObject)['additional'] = 'additionalValue';
+        (request.body.value as JsonObject)['additional'] = 'additionalValue';
       });
 
-      proxy.addResponseListener('test', 'id', ({ body: data }) => {
-        if (data.type !== 'string') {
+      proxy.addResponseListener('test', 'id', (_uuid, { response }) => {
+        if (response.body.type !== 'string') {
           fail();
         }
 
-        expect(data.value).toEqual(
+        expect(response.body.value).toEqual(
           `{"key":"value","numberKey":5110,"arrayKey":[1,2,3],"objectKey":{"nestedKey":"nestedValue","nestedNumber":51101},"additional":"additionalValue"}`
         );
         fn();

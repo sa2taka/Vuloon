@@ -76,16 +76,16 @@ export function encodeRequestBody(body: RequestBody, contentType?: string): Buff
   return Buffer.from('');
 }
 
-export function stringifyRequest(request: IncomingMessage, data: RequestBody): string {
+export function stringifyRequest(header: IncomingMessage, body: RequestBody): string {
   let requestPath: string | undefined;
   try {
-    requestPath = new URL(request.url!).pathname;
+    requestPath = new URL(header.url!).pathname;
   } catch (e) {
-    requestPath = request.url;
+    requestPath = header.url;
   }
 
-  let headerText = `${request.method} ${requestPath} HTTP/${request.httpVersion}\r\n`;
-  const headers = request.rawHeaders;
+  let headerText = `${header.method} ${requestPath} HTTP/${header.httpVersion}\r\n`;
+  const headers = header.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
     const key = headers[i];
     const value = headers[i + 1];
@@ -93,14 +93,14 @@ export function stringifyRequest(request: IncomingMessage, data: RequestBody): s
     headerText += `${key}: ${value}\r\n`;
   }
 
-  const dataText = encodeRequestBody(data, request.headers['content-type']);
+  const dataText = encodeRequestBody(body, header.headers['content-type']);
 
   return `${headerText}\r\n${dataText.toString()}`;
 }
 
-export function stringifyResponse(request: IncomingMessage, data: RequestBody): string {
-  let headerText = `HTTP/${request.httpVersion} ${request.statusCode} ${request.statusMessage}\r\n`;
-  const headers = request.rawHeaders;
+export function stringifyResponse(header: IncomingMessage, body: RequestBody): string {
+  let headerText = `HTTP/${header.httpVersion} ${header.statusCode} ${header.statusMessage}\r\n`;
+  const headers = header.rawHeaders;
   for (let i = 0; i < headers.length; i += 2) {
     const key = headers[i];
     const value = headers[i + 1];
@@ -108,14 +108,14 @@ export function stringifyResponse(request: IncomingMessage, data: RequestBody): 
     headerText += `${key}: ${value}\r\n`;
   }
 
-  const dataText = encodeRequestBody(data, request.headers['content-type']);
+  const dataText = encodeRequestBody(body, header.headers['content-type']);
 
   return `${headerText}\r\n${dataText.toString()}`;
 }
 
-export function isEqualRequestBody(left: RequestBody, right: RequestBody): boolean {
-  const leftBuffer = encodeRequestBody(left);
-  const rightBuffer = encodeRequestBody(right);
+export function isEqualRequestBody(left: RequestBody, right: RequestBody, contentType?: string): boolean {
+  const leftBuffer = encodeRequestBody(left, contentType);
+  const rightBuffer = encodeRequestBody(right, contentType);
   return leftBuffer.equals(rightBuffer);
 }
 
