@@ -9,23 +9,21 @@ export interface ResponseData {
     header: IncomingMessage;
     body: ResponseBody;
 }
-export declare type RequestListener = (id: string, data: {
+export declare type RequestListenerParameter = {
     request: RequestData;
     rawHttp: string;
-}) => void;
-export declare type AfterTamperingRequestListener = (id: string, data: {
-    request: RequestData;
-    rawHttp: string;
+};
+export declare type AfterTamperingRequestListenerParameter = RequestListenerParameter & {
     tampering: boolean;
-}) => void;
-export declare type TamperingRequestListener = (id: string, data: {
-    request: RequestData;
-    rawHttp: string;
-}) => Promise<RequestData | void>;
-export declare type ResponseListener = (id: string, data: {
+};
+export declare type RequestListener = (id: string, data: RequestListenerParameter) => void;
+export declare type AfterTamperingRequestListener = (id: string, data: AfterTamperingRequestListenerParameter) => void;
+export declare type TamperingRequestListener = (id: string, data: RequestListenerParameter) => Promise<RequestData | void>;
+export declare type ResponseListenerParameter = {
     response: ResponseData;
     rawHttp: string;
-}) => void;
+};
+export declare type ResponseListener = (id: string, data: ResponseListenerParameter, requestData: AfterTamperingRequestListenerParameter) => void;
 export interface Options {
     port?: number;
     nextProxy?: string;

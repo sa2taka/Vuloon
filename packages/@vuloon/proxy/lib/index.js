@@ -242,9 +242,10 @@ class Proxy2 {
       this.#appendProxyHeader(requestData);
       const afterRequestData = {
         request: tamperedData,
-        rawHttp
+        rawHttp,
+        tampering
       };
-      this.#emitAfterListener(uuid, { ...afterRequestData, tampering });
+      this.#emitAfterListener(uuid, afterRequestData);
       const headers = {};
       for (const h in requestData.headers) {
         if (!/^proxy-/i.test(h)) {
@@ -259,7 +260,7 @@ class Proxy2 {
         path: requestData.url,
         headers: requestData.headers,
         agent: this.#nextProxy ? new import_proxy_agent.default(this.#nextProxy.toString()) : void 0
-      }).on("error", () => response.writeHead(502).end()).on("timeout", () => response.writeHead(504).end()).on("response", this.#onResponse.bind(this, uuid)).on("response", (serverResponse) => {
+      }).on("error", () => response.writeHead(502).end()).on("timeout", () => response.writeHead(504).end()).on("response", this.#onResponse.bind(this, uuid, afterRequestData)).on("response", (serverResponse) => {
         serverResponse.headers["x-vuloon-proxy"] = "true";
         response.writeHead(serverResponse.statusCode, serverResponse.headers);
         serverResponse.pipe(response);
@@ -268,7 +269,7 @@ class Proxy2 {
       serverRequest.end();
     });
   }
-  #onResponse(uuid, response) {
+  #onResponse(uuid, requestData, response) {
     const header = response.headers;
     let buffer = Buffer.from([]);
     response.on("data", (data) => {
@@ -284,7 +285,7 @@ class Proxy2 {
         },
         rawHttp
       };
-      this.#emitResponseListener(uuid, responseData);
+      this.#emitResponseListener(uuid, responseData, requestData);
     });
   }
   #emitBeforeListener(...[uuid, data]) {
@@ -332,10 +333,10 @@ class Proxy2 {
       });
     });
   }
-  #emitResponseListener(...[uuid, data]) {
+  #emitResponseListener(...[uuid, data, requestData]) {
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach((listener) => {
-        listener(uuid, data);
+        listener(uuid, data, requestData);
       });
     });
   }

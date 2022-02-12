@@ -42,19 +42,20 @@ export interface ResponseData {
   body: ResponseBody;
 }
 
-export type RequestListener = (id: string, data: { request: RequestData; rawHttp: string }) => void;
+export type RequestListenerParameter = { request: RequestData; rawHttp: string };
+export type AfterTamperingRequestListenerParameter = RequestListenerParameter & { tampering: boolean };
 
-export type AfterTamperingRequestListener = (
+export type RequestListener = (id: string, data: RequestListenerParameter) => void;
+export type AfterTamperingRequestListener = (id: string, data: AfterTamperingRequestListenerParameter) => void;
+export type TamperingRequestListener = (id: string, data: RequestListenerParameter) => Promise<RequestData | void>;
+
+export type ResponseListenerParameter = { response: ResponseData; rawHttp: string };
+
+export type ResponseListener = (
   id: string,
-  data: { request: RequestData; rawHttp: string; tampering: boolean }
+  data: ResponseListenerParameter,
+  requestData: AfterTamperingRequestListenerParameter
 ) => void;
-
-export type TamperingRequestListener = (
-  id: string,
-  data: { request: RequestData; rawHttp: string }
-) => Promise<RequestData | void>;
-
-export type ResponseListener = (id: string, data: { response: ResponseData; rawHttp: string }) => void;
 
 export interface Options {
   port?: number;
@@ -373,9 +374,10 @@ export class Proxy {
       const afterRequestData = {
         request: tamperedData,
         rawHttp: rawHttp,
+        tampering,
       };
 
-      this.#emitAfterListener(uuid, { ...afterRequestData, tampering });
+      this.#emitAfterListener(uuid, afterRequestData);
 
       const headers: Record<string, string | string[] | undefined> = {};
       for (const h in requestData.headers) {
@@ -397,7 +399,7 @@ export class Proxy {
       })
         .on('error', () => response.writeHead(502).end())
         .on('timeout', () => response.writeHead(504).end())
-        .on('response', this.#onResponse.bind(this, uuid))
+        .on('response', this.#onResponse.bind(this, uuid, afterRequestData))
         .on('response', (serverResponse) => {
           serverResponse.headers['x-vuloon-proxy'] = 'true';
           response.writeHead(serverResponse.statusCode!, serverResponse.headers);
@@ -409,7 +411,7 @@ export class Proxy {
     });
   }
 
-  #onResponse(uuid: string, response: IncomingMessage): void {
+  #onResponse(uuid: string, requestData: AfterTamperingRequestListenerParameter, response: IncomingMessage): void {
     const header = response.headers;
     let buffer = Buffer.from([]);
 
@@ -427,7 +429,7 @@ export class Proxy {
         },
         rawHttp,
       };
-      this.#emitResponseListener(uuid, responseData);
+      this.#emitResponseListener(uuid, responseData, requestData);
     });
   }
 
@@ -485,10 +487,10 @@ export class Proxy {
     });
   }
 
-  #emitResponseListener(...[uuid, data]: Parameters<ResponseListener>): void {
+  #emitResponseListener(...[uuid, data, requestData]: Parameters<ResponseListener>): void {
     Object.values(this.#responseListeners).forEach((moduleListener) => {
       Object.values(moduleListener).forEach((listener) => {
-        listener(uuid, data);
+        listener(uuid, data, requestData);
       });
     });
   }
