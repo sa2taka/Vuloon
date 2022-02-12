@@ -4,6 +4,7 @@ import { disableProxy } from '@vuloon/proxy-setter';
 import { getConfig } from './main/domain/repositories/config/index';
 import { registerHandler } from '@/main/ipc/registerHandler';
 import { windowManager } from '@/main/domain/models/windowManager';
+import { initialize } from '@/main/initialize';
 
 function createWindow() {
   registerHandler();
@@ -17,7 +18,7 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createWindow).then(initialize);
 app.on('window-all-closed', app.quit);
 app.on('before-quit', async () => {
   const proxy = getProxy();
