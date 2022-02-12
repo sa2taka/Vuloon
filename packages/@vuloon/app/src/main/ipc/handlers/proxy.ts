@@ -1,6 +1,6 @@
 import { getProxy } from '@/main/domain/models/proxy';
 import { ipcMain } from 'electron';
-import { START_PROXY, STOP_PROXY, SET_CERTIFICATE } from '../sendKeys';
+import { START_PROXY, STOP_PROXY, SET_CERTIFICATE } from '../../../ipc/rendererToMainKeys';
 import { setProxy, enableProxy, disableProxy } from '@vuloon/proxy-setter';
 import { addCert } from '@vuloon/root-certificate-supplier';
 

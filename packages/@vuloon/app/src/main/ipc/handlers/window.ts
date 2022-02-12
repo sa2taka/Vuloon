@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { COMPLETE_INITIAL } from '../sendKeys';
+import { COMPLETE_INITIAL } from '../../../ipc/rendererToMainKeys';
 import { windowManager } from '@/main/domain/models/windowManager';
 import { getConfig, setConfig } from '@/main/domain/repositories/config';
 

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 import { Config } from '@/domain/entities/config';
-import { READ_CONFIG, WRITE_CONFIG } from '../sendKeys';
+import { READ_CONFIG, WRITE_CONFIG } from '../../../ipc/rendererToMainKeys';
 import { getConfig, setConfig } from '../../domain/repositories/config/index';
 
 export const configHandler = (): void => {
