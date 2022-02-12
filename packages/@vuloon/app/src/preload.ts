@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import * as Keys from '@/ipc/sendKeys';
+import * as Keys from '@/main/ipc/sendKeys';
 import { Config } from '@/domain/entities/config';
 
 const apis = {

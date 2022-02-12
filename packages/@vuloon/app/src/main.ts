@@ -2,7 +2,7 @@ import { getProxy } from '@/main/domain/models/proxy';
 import { app } from 'electron';
 import { disableProxy } from '@vuloon/proxy-setter';
 import { getConfig } from './main/domain/repositories/config/index';
-import { registerHandler } from '@/ipc/registerHandler';
+import { registerHandler } from '@/main/ipc/registerHandler';
 import { windowManager } from '@/main/domain/models/windowManager';
 
 function createWindow() {
