@@ -11,6 +11,15 @@ const apis = {
   [Keys.SET_CERTIFICATE]: () => ipcRenderer.invoke(Keys.SET_CERTIFICATE),
 
   [Keys.COMPLETE_INITIAL]: () => ipcRenderer.send(Keys.COMPLETE_INITIAL),
+
+  ipcRenderer: {
+    on: <T extends any[]>(channel: string, callback: (event: Event, ...args: T) => void) =>
+      ipcRenderer.on(channel, callback as (event: Event, ...args: any[]) => void),
+    once: <T extends any[]>(channel: string, callback: (event: Event, ...args: T) => void) =>
+      ipcRenderer.once(channel, callback as (event: Event, ...args: any[]) => void),
+    removeListener: (channel: string, listener: (...args: any[]) => void) =>
+      ipcRenderer.removeListener(channel, listener),
+  },
 };
 
 export type ElectronApi = typeof apis;
