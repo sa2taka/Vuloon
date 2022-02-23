@@ -480,7 +480,6 @@ class Proxy2 {
     }
     const match = request.url.match(/^https?:\/\/([^/]+)(.*)/);
     if (match) {
-      request.url = match[2] || "/";
       return _parseHost(match[1], port);
     } else if (request.headers.host) {
       return _parseHost(request.headers.host, port);
