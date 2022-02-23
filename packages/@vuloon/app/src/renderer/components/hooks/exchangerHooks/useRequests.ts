@@ -8,7 +8,7 @@ export const useRequests = (): ProxyExchange[] => {
 
   useEffect(() => {
     const unsubscribe = requestExchanger.register((event) => {
-      setRequests((before) => uniqBy([event.detail].concat(requests), 'proxyIssuedId'));
+      setRequests((before) => uniqBy([event.detail].concat(before), 'proxyIssuedId'));
     });
 
     return unsubscribe;
