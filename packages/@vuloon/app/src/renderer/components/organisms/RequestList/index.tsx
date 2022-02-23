@@ -1,4 +1,6 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead } from '@mui/material';
+import { RequestListHead } from '@/renderer/components/organisms/RequestList/RequestListHead';
+import { RequestListRow } from '@/renderer/components/organisms/RequestList/RequestListRow';
+import { Table, TableContainer } from '@mui/material';
 import React from 'react';
 import { useRequests } from '../../hooks/exchangerHooks/useRequests';
 
@@ -10,15 +12,15 @@ export const RequestList: React.VFC<Props> = () => {
   return (
     <TableContainer>
       <Table>
-        <TableHead>
-          <TableCell>HOST</TableCell>
-          <TableCell>path</TableCell>
-        </TableHead>
+        <RequestListHead />
         {requests.map((request) => (
-          <TableBody key={request.proxyIssuedId}>
-            <TableCell>{request.request.request.header.headers.host}</TableCell>
-            <TableCell>{request.request.request.header.url}</TableCell>
-          </TableBody>
+          <RequestListRow
+            key={request.proxyIssuedId}
+            method={request.request.request.header.method}
+            host={request.request.request.header.headers.host}
+            path={request.request.request.header.url}
+            statusCode={request.response.response.header.statusCode}
+          />
         ))}
       </Table>
     </TableContainer>
