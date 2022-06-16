@@ -4,8 +4,8 @@ import { onResponseParameter } from '@/@types/rendererToMainTypes';
 
 export type ProxyExchange = {
   proxyIssuedId: onResponseParameter[0];
-  response: onResponseParameter[1];
-  request: onResponseParameter[2];
+  responseParameter: onResponseParameter[1];
+  requestParameter: onResponseParameter[2];
 };
 
 class RequestExchanger extends ExchangerEventBase<ProxyExchange> {
@@ -24,11 +24,11 @@ class RequestExchanger extends ExchangerEventBase<ProxyExchange> {
     }
   }
 
-  #responseListener: (...args: onResponseParameter) => void = (proxyIssuedId, response, request) => {
+  #responseListener: (...args: onResponseParameter) => void = (proxyIssuedId, responseParameter, requestParameter) => {
     const data = {
       proxyIssuedId,
-      response,
-      request,
+      responseParameter,
+      requestParameter,
     };
     this.#store.unshift(data);
     this.send(new CustomEvent(this.key, { detail: data }));

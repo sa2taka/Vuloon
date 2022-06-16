@@ -7,19 +7,19 @@ import { useRequests } from '../../hooks/exchangerHooks/useRequests';
 interface Props {}
 
 export const RequestList: React.VFC<Props> = () => {
-  const requests = useRequests();
+  const exchangeDataList = useRequests();
 
   return (
     <TableContainer>
       <Table>
         <RequestListHead />
-        {requests.map((request) => (
+        {exchangeDataList.map((exchangeData) => (
           <RequestListRow
-            key={request.proxyIssuedId}
-            method={request.request.request.header.method}
-            host={request.request.request.header.headers.host}
-            path={request.request.request.header.url}
-            statusCode={request.response.response.header.statusCode}
+            key={exchangeData.proxyIssuedId}
+            method={exchangeData.requestParameter.request.header.method}
+            host={exchangeData.requestParameter.request.header.headers.host}
+            path={exchangeData.requestParameter.request.header.url}
+            statusCode={exchangeData.responseParameter.response.header.statusCode}
           />
         ))}
       </Table>
